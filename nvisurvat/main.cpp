@@ -25,9 +25,8 @@ void clearscreen() {
     system("cls");
 }
 
-class admin {
+class admin : public common_variables {
 private:
-    int choice;
     string fname, mname, lname;
     string department;
     string year;
@@ -37,6 +36,55 @@ private:
     long long int enrollmentno;
     long long int mobile;
     int teacherid;
+public:
+    admin() {
+        try {
+            driver = sql::mysql::get_mysql_driver_instance();
+            con = driver->connect("tcp://127.0.0.1:3306", "root", "12345"); // Exception handling by using try-catch statement
+            con->setSchema("GPA_db"); 
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl; // displaying  error received from database
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    void adminmenu() {
+        cout << "Admin Menu" << endl << endl;
+        cout << "1. Register Student" << endl;
+        cout << "2. View Student list" << endl;
+        cout << "3. Delete Student" << endl;
+        cout << "4. Add Teacher" << endl;
+        cout << "5. View Teacher list" << endl;
+        cout << "6. Delete Teacher" << endl;
+        cout << "7. Log out" << endl;
+        cout << "Enter choice: ";
+        cin >> choice;
+        clearscreen();
+
+        if (choice == 1) {
+            registerStudent();
+        }
+        else if (choice == 2) {
+            showStudentList();
+        }
+        else if (choice == 3) {
+            deleteStudent();
+        }
+        else if (choice == 4) {
+            registerTeacher();
+        }
+        else if (choice == 5) {
+            showTeacherList();
+        }
+        else if (choice == 6) {
+            deleteTeacher();
+        }
+        else if (choice == 7) {
+            cout << "Log out" << endl;
+            exit(EXIT_SUCCESS);
+        }
+    }
 };
 
 void mainscreen() {

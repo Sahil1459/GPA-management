@@ -59,7 +59,7 @@ void mainscreen() {
             cout << "Admin login successful!" << endl << endl;
             //a.adminmenu();
         }
-        else {
+        else { 
             cout << "Invalid username or password!" << endl << endl;
             cout << "1. Try again" << endl;
             cout << "2. Back to main menu" << endl;

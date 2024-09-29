@@ -85,6 +85,57 @@ public:
             exit(EXIT_SUCCESS);
         }
     }
+
+    bool registerStudent() {
+        cout << "Enter first name: ";
+        cin >> fname;
+        cout << "Enter middle name: ";
+        cin >> mname;
+        cout << "Enter last name: ";
+        cin >> lname;
+        cout << "Enter enrollment number: ";
+        cin >> enrollmentno;
+        cout << "Enter department (IF / CO / EJ / CE / ME / EE /AE): ";
+        cin >> department;
+        cout << "Enter year (FY / SY / TY): ";
+        cin >> year;
+        cout << "Enter email id: ";
+        cin >> emailid;
+        cout << "Enter mobile number: ";
+        cin >> mobile;
+        cout << "Enter birthdate (dd/mm/yyyy): ";
+        cin >> birthdate;
+        cin.ignore();
+        cout << "Enter address: ";
+        getline(cin, address);
+
+        string password, confirmPassword;
+        do {
+            cout << "Enter password: ";
+            cin >> password;
+            cout << "Confirm password: ";
+            cin >> confirmPassword;
+
+            if (password != confirmPassword) {
+                cout << "Passwords do not match! Please try again." << endl;
+            }
+        } while (password != confirmPassword);
+
+        try {
+            stmt = con->createStatement();
+            string insertQuery = "INSERT INTO students (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password) VALUES (" +
+                to_string(enrollmentno) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + year + "','" + emailid + "'," +
+                to_string(mobile) + ",'" + birthdate + "','" + address + "','" + password + "')";
+            stmt->execute(insertQuery);
+
+            cout << endl << "Registration successful!" << endl << endl;
+            adminmenu();
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+        return true;
+    }
 };
 
 void mainscreen() {

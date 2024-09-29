@@ -59,6 +59,7 @@ public:
     }
 
     void adminmenu() {
+        cout << "Admin Menu" << endl << endl;
         cout << "1. Register Student" << endl;
         cout << "2. View Student list" << endl;
         cout << "3. Delete Student" << endl;
@@ -146,14 +147,10 @@ public:
 
     void showStudentList() {
         try {
-            // Initialize MySQL driver and connection with your database credentials
             sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
             std::unique_ptr<sql::Connection> con(driver->connect("tcp://127.0.0.1:3306", "root", "12345"));
 
-            // Connect to the specific database
             con->setSchema("GPA_db");
-
-            // Create a statement object
             std::unique_ptr<sql::Statement> stmt(con->createStatement());
 
             // SQL query to retrieve student data with concatenated name
@@ -161,10 +158,8 @@ public:
                 "department, year, emailid, mobile, birthdate, address "
                 "FROM students";
 
-            // Execute the query
+            // Executing the query
             std::unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
-
-            // Set column widths based on expected maximum lengths
             const int widthEnrollment = 15; // enrollmentno (bigint)
             const int widthName = 30;       // Name (concatenation of fname, mname, lname)
             const int widthDepartment = 10; // department (varchar(2))
@@ -210,6 +205,26 @@ public:
                     << std::setw(widthAddress) << res->getString("address")
                     << std::endl;
             }
+            int choice;
+            cout << endl << endl;
+            cout << "1. Back to admin menu" << endl;
+            cout << "2. Logout" << endl;
+            cout << "Enter a option:" << endl;;
+            cin >> choice;
+            cout << endl << endl;
+            clearscreen();
+            if (choice == 1) {
+                adminmenu();
+            }
+            else if (choice == 2) {
+                exit(0);
+
+            }
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                showStudentList();
+            }
+
 
         }
         catch (sql::SQLException& e) {

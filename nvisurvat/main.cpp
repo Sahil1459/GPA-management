@@ -10,9 +10,13 @@
 #include <mysql_driver.h>
 #include <mysql_connection.h>
 
-using namespace std;
+using namespace std; 
 
-class common_variables {
+sql::mysql::MySQL_Driver* driver; // Global variables to establish connection between Database and program
+sql::Connection* con;
+sql::Statement* stmt;
+
+class common_variables { //Class used for variables which are used through out the program
 public:
     int choice;
 };
@@ -20,6 +24,20 @@ public:
 void clearscreen() {
     system("cls");
 }
+
+class admin {
+private:
+    int choice;
+    string fname, mname, lname;
+    string department;
+    string year;
+    string emailid;
+    string birthdate;
+    string address;
+    long long int enrollmentno;
+    long long int mobile;
+    int teacherid;
+};
 
 void mainscreen() {
     common_variables var;

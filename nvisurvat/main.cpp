@@ -16,6 +16,7 @@ sql::mysql::MySQL_Driver* driver; // Global variables to establish connection be
 sql::Connection* con;
 sql::Statement* stmt;
 
+
 class common_variables { //Class used for variables which are used through out the program
 public:
     int choice;
@@ -36,15 +37,17 @@ private:
     long long int enrollmentno;
     long long int mobile;
     int teacherid;
+    string password, confirmPassword;
 public:
     admin() {
         try {
+            // Initialize the MySQL driver and connection
             driver = sql::mysql::get_mysql_driver_instance();
-            con = driver->connect("tcp://127.0.0.1:3306", "root", "12345"); // Exception handling by using try-catch statement
-            con->setSchema("GPA_db"); 
+            con = driver->connect("tcp://127.0.0.1:3306", "root", "12345"); // Change the username and password as needed
+            con->setSchema("GPA_db"); // Replace 'student_db' with your database name
         }
         catch (sql::SQLException& e) {
-            cerr << "SQL Error: " << e.what() << endl; // displaying  error received from database
+            cerr << "SQL Error: " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -69,16 +72,16 @@ public:
             showStudentList();
         }
         else if (choice == 3) {
-            deleteStudent();
+            //deleteStudent();
         }
         else if (choice == 4) {
-            registerTeacher();
+            //registerTeacher();
         }
         else if (choice == 5) {
-            showTeacherList();
+            //showTeacherList();
         }
         else if (choice == 6) {
-            deleteTeacher();
+            //deleteTeacher();
         }
         else if (choice == 7) {
             cout << "Log out" << endl;
@@ -108,9 +111,7 @@ public:
         cin.ignore();
         cout << "Enter address: ";
         getline(cin, address);
-
-        string password, confirmPassword;
-        do {
+        do {                                                                // using do while loop for double confirmation of password
             cout << "Enter password: ";
             cin >> password;
             cout << "Confirm password: ";
@@ -136,9 +137,95 @@ public:
         }
         return true;
     }
+
+    void showStudentList() {
+        try {
+            std::unique_ptr<sql::Statement> stmt(con->createStatement());
+
+            // SQL query to retrieve student data 
+            std::string query = "SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
+                "department, year, emailid, mobile, birthdate, address "
+                "FROM students";
+
+            // Executing the query
+            std::unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
+            const int widthEnrollment = 15; // enrollmentno (bigint)
+            const int widthName = 30;       // Name (concatenation of fname, mname, lname)
+            const int widthDepartment = 10; // department (varchar(2))
+            const int widthYear = 6;        // year (varchar(2))
+            const int widthEmail = 30;      // emailid (varchar(50))
+            const int widthMobile = 15;     // mobile (bigint)
+            const int widthBirthdate = 12;  // birthdate (varchar(10))
+            const int widthAddress = 35;    // address (varchar(100))
+
+            // Display header without adding extra lines
+            std::cout << std::left
+                << std::setw(15) << "Enrollment No"
+                << std::setw(30) << "Name"
+                << std::setw(10) << "Dept"
+                << std::setw(6) << "Year"
+                << std::setw(30) << "Email ID"
+                << std::setw(15) << "Mobile"
+                << std::setw(12) << "Birthdate"
+                << std::setw(35) << "Address"
+                << std::endl;
+
+            // Display separator line
+            std::cout << std::string(widthEnrollment, '-')
+                << std::string(widthName, '-')
+                << std::string(widthDepartment, '-')
+                << std::string(widthYear, '-')
+                << std::string(widthEmail, '-')
+                << std::string(widthMobile, '-')
+                << std::string(widthBirthdate, '-')
+                << std::string(widthAddress, '-')
+                << std::endl;
+
+            // Fetch and display each row of data without adding extra lines
+            while (res->next()) {
+                std::cout << std::left
+                    << std::setw(widthEnrollment) << res->getString("enrollmentno")
+                    << std::setw(widthName) << res->getString("Name")
+                    << std::setw(widthDepartment) << res->getString("department")
+                    << std::setw(widthYear) << res->getString("year")
+                    << std::setw(widthEmail) << res->getString("emailid")
+                    << std::setw(widthMobile) << res->getString("mobile")
+                    << std::setw(widthBirthdate) << res->getString("birthdate")
+                    << std::setw(widthAddress) << res->getString("address")
+                    << std::endl;
+            }
+            int choice;
+            cout << endl << endl;
+            cout << "1. Back to admin menu" << endl;
+            cout << "2. Logout" << endl;
+            cout << "Enter a option:" << endl;;
+            cin >> choice;
+            cout << endl << endl;
+            clearscreen();
+            if (choice == 1) {
+                adminmenu();
+            }
+            else if (choice == 2) {
+                exit(0);
+
+            }
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                showStudentList();
+            }
+
+
+        }
+        catch (sql::SQLException& e) {
+            std::cerr << "SQLException: " << e.what() << std::endl;
+            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+        }
+    }
 };
 
 void mainscreen() {
+    admin a;
     common_variables var;
     string username, password;
     cout << "Welcome to Government Polytechnic Awasari" << endl << endl
@@ -174,7 +261,7 @@ void mainscreen() {
 
         if (username == "admin" && password == "admin") {
             cout << "Admin login successful!" << endl << endl;
-            //a.adminmenu();
+            a.adminmenu();
         }
         else { 
             cout << "Invalid username or password!" << endl << endl;

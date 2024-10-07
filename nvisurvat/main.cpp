@@ -83,7 +83,7 @@ public:
             showTeacherList();
         }
         else if (choice == 6) {
-            //deleteTeacher();
+            deleteTeacher();
         }
         else if (choice == 7) {
             cout << "Logged out" << endl;
@@ -385,8 +385,39 @@ public:
         }
     }
 
+    void deleteTeacher() {
+        cout << "Enter teacher ID of the teacher to delete: ";
+        cin >> teacherid;
+
+        try {
+            stmt = con->createStatement();
+            string deleteQuery = "DELETE FROM teachers WHERE teacherid = " + to_string(teacherid);
+            stmt->execute(deleteQuery);
+
+            cout << "Teacher record deleted successfully!" << endl;
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+        cout << endl << endl
+            << "1. Delete another teacher" << endl
+            << "2. Back to admin menu" << endl
+            << "Enter a option:";
+        cin >> choice;
+        clearscreen();
+
+        if (choice == 1) {
+            deleteTeacher();
+
+        }
+
+        if (choice == 2) {
+            adminmenu();
+        }
+    }
 
 };
+
 
 void mainscreen() {
     admin a;

@@ -12,6 +12,8 @@
 
 using namespace std; 
 
+void mainscreen();
+
 sql::mysql::MySQL_Driver* driver; // Global variables to establish connection between Database and program
 sql::Connection* con;
 sql::Statement* stmt;
@@ -84,8 +86,8 @@ public:
             //deleteTeacher();
         }
         else if (choice == 7) {
-            cout << "Log out" << endl;
-            exit(EXIT_SUCCESS);
+            cout << "Logged out" << endl;
+            mainscreen();
         }
     }
 
@@ -291,9 +293,10 @@ public:
 
         cout << endl << endl
             << "1. Add another Teacher" << endl
-            << "2. Back to adminn menu" << endl
+            << "2. Back to admin menu" << endl
             << "Enter a option:";
         cin >> choice;
+        clearscreen();
 
         if (choice == 1) {
             registerTeacher();

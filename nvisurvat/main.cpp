@@ -72,7 +72,7 @@ public:
             showStudentList();
         }
         else if (choice == 3) {
-            //deleteStudent();
+            deleteStudent();
         }
         else if (choice == 4) {
             //registerTeacher();
@@ -140,15 +140,15 @@ public:
 
     void showStudentList() {
         try {
-            std::unique_ptr<sql::Statement> stmt(con->createStatement());
+            unique_ptr<sql::Statement> stmt(con->createStatement());
 
             // SQL query to retrieve student data 
-            std::string query = "SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
+            string query = "SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, year, emailid, mobile, birthdate, address "
                 "FROM students";
 
             // Executing the query
-            std::unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
+           unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
             const int widthEnrollment = 15; // enrollmentno (bigint)
             const int widthName = 30;       // Name (concatenation of fname, mname, lname)
             const int widthDepartment = 10; // department (varchar(2))
@@ -159,45 +159,45 @@ public:
             const int widthAddress = 35;    // address (varchar(100))
 
             // Display header without adding extra lines
-            std::cout << std::left
-                << std::setw(15) << "Enrollment No"
-                << std::setw(30) << "Name"
-                << std::setw(10) << "Dept"
-                << std::setw(6) << "Year"
-                << std::setw(30) << "Email ID"
-                << std::setw(15) << "Mobile"
-                << std::setw(12) << "Birthdate"
-                << std::setw(35) << "Address"
-                << std::endl;
+            cout << left
+                << setw(15) << "Enrollment No"
+                << setw(30) << "Name"
+                << setw(10) << "Dept"
+                << setw(6) << "Year"
+                << setw(30) << "Email ID"
+                << setw(15) << "Mobile"
+                << setw(12) << "Birthdate"
+                << setw(35) << "Address"
+                << endl;
 
             // Display separator line
-            std::cout << std::string(widthEnrollment, '-')
-                << std::string(widthName, '-')
-                << std::string(widthDepartment, '-')
-                << std::string(widthYear, '-')
-                << std::string(widthEmail, '-')
-                << std::string(widthMobile, '-')
-                << std::string(widthBirthdate, '-')
-                << std::string(widthAddress, '-')
-                << std::endl;
+            cout << string(widthEnrollment, '-')
+                << string(widthName, '-')
+                << string(widthDepartment, '-')
+                << string(widthYear, '-')
+                << string(widthEmail, '-')
+                << string(widthMobile, '-')
+                << string(widthBirthdate, '-')
+                << string(widthAddress, '-')
+                << endl;
 
             // Fetch and display each row of data without adding extra lines
             while (res->next()) {
-                std::cout << std::left
-                    << std::setw(widthEnrollment) << res->getString("enrollmentno")
-                    << std::setw(widthName) << res->getString("Name")
-                    << std::setw(widthDepartment) << res->getString("department")
-                    << std::setw(widthYear) << res->getString("year")
-                    << std::setw(widthEmail) << res->getString("emailid")
-                    << std::setw(widthMobile) << res->getString("mobile")
-                    << std::setw(widthBirthdate) << res->getString("birthdate")
-                    << std::setw(widthAddress) << res->getString("address")
-                    << std::endl;
+                cout << left
+                    << setw(widthEnrollment) << res->getString("enrollmentno")
+                    << setw(widthName) << res->getString("Name")
+                    << setw(widthDepartment) << res->getString("department")
+                    << setw(widthYear) << res->getString("year")
+                    << setw(widthEmail) << res->getString("emailid")
+                    << setw(widthMobile) << res->getString("mobile")
+                    << setw(widthBirthdate) << res->getString("birthdate")
+                    << setw(widthAddress) << res->getString("address")
+                    << endl;
             }
             int choice;
             cout << endl << endl;
             cout << "1. Back to admin menu" << endl;
-            cout << "2. Logout" << endl;
+            cout << "2. Refresh" << endl;
             cout << "Enter a option:" << endl;;
             cin >> choice;
             cout << endl << endl;
@@ -206,7 +206,7 @@ public:
                 adminmenu();
             }
             else if (choice == 2) {
-                exit(0);
+                showStudentList();
 
             }
             else {
@@ -217,10 +217,42 @@ public:
 
         }
         catch (sql::SQLException& e) {
-            std::cerr << "SQLException: " << e.what() << std::endl;
-            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
-            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+            cerr << "SQLException: " << e.what() << endl;
+            cerr << "MySQL error code: " << e.getErrorCode() << endl;
+            cerr << "SQLState: " << e.getSQLState() << endl;
         }
+    }
+
+    void deleteStudent() {
+        cout << "Enter enrollment number of the student to delete: ";
+        cin >> enrollmentno;
+
+        try {
+            stmt = con->createStatement();
+            string deleteQuery = "DELETE FROM students WHERE enrollmentno = " + to_string(enrollmentno);
+            stmt->execute(deleteQuery);
+
+            cout << "Student record deleted successfully!" << endl;
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+        int choice;
+        cout << endl << endl;
+        cout << "1. Delete another student" << endl;
+        cout << "2. Back to admin menu" << endl;
+        cout << "Enter a option:" << endl;
+        cin >> choice;
+        cout << endl << endl;
+        clearscreen();
+        if (choice == 1) {
+            deleteStudent();
+        }
+        if (choice == 2) {
+            adminmenu();
+        }
+
+
     }
 };
 

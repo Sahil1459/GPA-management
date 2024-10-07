@@ -80,7 +80,7 @@ public:
             registerTeacher();
         }
         else if (choice == 5) {
-            //showTeacherList();
+            showTeacherList();
         }
         else if (choice == 6) {
             //deleteTeacher();
@@ -309,6 +309,83 @@ public:
 
        
     }
+
+    void showTeacherList() {
+        try {
+            stmt = con->createStatement();
+            sql::ResultSet* res = stmt->executeQuery("SELECT * FROM teachers");
+
+            // Define column widths
+            const int widthID = 10;
+            const int widthName = 15;
+            const int widthDepartment = 12;
+            const int widthEmail = 30;
+            const int widthMobile = 15;
+            const int widthBirthdate = 12;
+            const int widthAddress = 35;
+
+            // Print header with appropriate column widths
+            cout << left
+                << setw(widthID) << "Teacher ID"
+                << setw(widthName) << "First Name"
+                << setw(widthName) << "Middle Name"
+                << setw(widthName) << "Last Name"
+                << setw(widthDepartment) << "Department"
+                << setw(widthEmail) << "Email"
+                << setw(widthMobile) << "Mobile"
+                << setw(widthBirthdate) << "Birthdate"
+                << setw(widthAddress) << "Address" << endl;
+
+            // Print separator without spaces
+            cout << string(widthID, '-')
+                << string(widthName, '-')
+                << string(widthName, '-')
+                << string(widthName, '-')
+                << string(widthDepartment, '-')
+                << string(widthEmail, '-')
+                << string(widthMobile, '-')
+                << string(widthBirthdate, '-')
+                << string(widthAddress, '-') << endl;
+
+            // Display each row of data with proper alignment
+            while (res->next()) {
+                cout << left
+                    << setw(widthID) << res->getInt("teacherid")
+                    << setw(widthName) << res->getString("fname")
+                    << setw(widthName) << res->getString("mname")
+                    << setw(widthName) << res->getString("lname")
+                    << setw(widthDepartment) << res->getString("department")
+                    << setw(widthEmail) << res->getString("emailid")
+                    << setw(widthMobile) << res->getString("mobile")
+                    << setw(widthBirthdate) << res->getString("birthdate")
+                    << setw(widthAddress) << res->getString("address") << endl;
+            }
+
+            delete res;
+
+            // New lines added here
+            cout << endl << endl
+                << "1. Refresh" << endl
+                << "2. Back to admin menu" << endl
+                << "Enter a option:";
+            cin >> choice;
+            clearscreen();
+
+            if (choice == 1) {
+                showTeacherList();
+            }
+
+            if (choice == 2) {
+                adminmenu();
+            }
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+    }
+
+
 };
 
 void mainscreen() {

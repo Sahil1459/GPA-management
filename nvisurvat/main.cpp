@@ -75,7 +75,7 @@ public:
             deleteStudent();
         }
         else if (choice == 4) {
-            //registerTeacher();
+            registerTeacher();
         }
         else if (choice == 5) {
             //showTeacherList();
@@ -253,6 +253,58 @@ public:
         }
 
 
+    }
+
+    void registerTeacher() {
+        cout << "Enter first name: ";
+        cin >> fname;
+        cout << "Enter middle name: ";
+        cin >> mname;
+        cout << "Enter last name: ";
+        cin >> lname;
+        cout << "Enter email id: ";
+        cin >> emailid;
+        cout << "Enter mobile number: ";
+        cin >> mobile;
+        cout << "Enter department (IF / CO / EJ / CE / ME / EE /AE): ";
+        cin >> department;
+        cout << "Enter birthdate (dd/mm/yyyy): ";
+        cin >> birthdate;
+        cin.ignore();
+        cout << "Enter address: ";
+        getline(cin, address);
+        cout << "Assign teacher id: ";
+        cin >> teacherid;
+
+        try {
+            stmt = con->createStatement();
+            string insertQuery = "INSERT INTO teachers (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address) VALUES (" +
+                to_string(teacherid) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
+                to_string(mobile) + ",'" + birthdate + "','" + address + "')";
+            stmt->execute(insertQuery);
+
+            cout << endl << endl << "Teacher registered successfully!" << endl;
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+
+        cout << endl << endl
+            << "1. Add another Teacher" << endl
+            << "2. Back to adminn menu" << endl
+            << "Enter a option:";
+        cin >> choice;
+
+        if (choice == 1) {
+            registerTeacher();
+        }
+
+        if (choice == 2) {
+            adminmenu();
+        }
+
+
+       
     }
 };
 

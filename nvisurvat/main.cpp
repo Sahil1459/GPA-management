@@ -10,7 +10,7 @@
 #include <mysql_driver.h>
 #include <mysql_connection.h>
 
-using namespace std; 
+using namespace std;
 
 void mainscreen();
 
@@ -40,6 +40,18 @@ private:
     long long int mobile;
     int teacherid;
     string password, confirmPassword;
+    string gender;
+    string addmission_date;
+    string guardian_name;
+    long long int guardian_mobile;
+    string blood_grp;
+    string nationality;
+    string category;
+    string aadhar_number;
+    string joining_date;
+    int experience_years;
+
+
 public:
     admin() {
         try {
@@ -55,7 +67,8 @@ public:
     }
 
     void adminmenu() {
-        cout << "Admin Menu" << endl << endl;
+        cout << "Welcome to Admin Dashboard" << endl << endl;
+        admin_choice_re:
         cout << "1. Register Student" << endl;
         cout << "2. View Student list" << endl;
         cout << "3. Delete Student" << endl;
@@ -89,6 +102,10 @@ public:
             cout << "Logged out" << endl;
             mainscreen();
         }
+        else {
+            cout << "Enter a Valid option !";
+            goto admin_choice_re;
+        }
     }
 
     bool registerStudent() {
@@ -111,7 +128,25 @@ public:
         cout << "Enter birthdate (dd/mm/yyyy): ";
         cin >> birthdate;
         cin.ignore();
+        cout << "Enter Gender (M/F):";
+        cin >> gender;
+        cout << "Enter admission date:";
+        cin >> addmission_date;
+        cout << "Enter Guardian Full name:";
+        cin.ignore();
+        getline(cin, guardian_name);
+        cout << "Enter guardian mobile no. :";
+        cin >> guardian_mobile;
+        cout << "Enter blood group:";
+        cin >> blood_grp;
+        cout << "Enter nationality:";
+        cin >> nationality;
+        cout << "Enter category:";
+        cin >> category;
+        cout << "Enter aadhar number:";
+        cin >> aadhar_number;
         cout << "Enter address: ";
+        cin.ignore();
         getline(cin, address);
         do {                                                                // using do while loop for double confirmation of password
             cout << "Enter password: ";
@@ -126,16 +161,36 @@ public:
 
         try {
             stmt = con->createStatement();
-            string insertQuery = "INSERT INTO students (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password) VALUES (" +
+            string insertQuery = "INSERT INTO students (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password, gender, admission_date, guardian_name,guardian_contact, blood_group, nationality, category, aadhar_number) VALUES (" +
                 to_string(enrollmentno) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + year + "','" + emailid + "'," +
-                to_string(mobile) + ",'" + birthdate + "','" + address + "','" + password + "')";
+                to_string(mobile) + ",'" + birthdate + "','" + address + "','" + password + "', '" + gender + "', '" + addmission_date + "', '" + guardian_name + "', " + to_string(guardian_mobile) + ", '" + blood_grp + "', '" + nationality + "', '" + category + "', '" + aadhar_number + "')";
             stmt->execute(insertQuery);
 
             cout << endl << "Registration successful!" << endl << endl;
+        register_re:
+            cout << "1. Add another student" << endl
+                << "2. Back to admin menu" << endl
+                << "Enter a option:";
+            cin >> choice;
+            if (choice == 1) {
+                clearscreen();
+                registerStudent();
+
+            }
+            else if (choice == 2) {
+                clearscreen();
+                adminmenu();
+            }
+            else {
+                cout << "Enter a valid option !";
+                goto register_re;
+            }
+            clearscreen();
             adminmenu();
         }
         catch (sql::SQLException& e) {
             cerr << "SQL Error: " << e.what() << endl;
+            registerStudent();
         }
         return true;
     }
@@ -144,32 +199,51 @@ public:
         try {
             unique_ptr<sql::Statement> stmt(con->createStatement());
 
-            // SQL query to retrieve student data 
+            // SQL query to retrieve student data with additional fields
             string query = "SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
-                "department, year, emailid, mobile, birthdate, address "
+                "department, year, emailid, mobile, birthdate, address, gender, admission_date, "
+                "guardian_name, guardian_contact, blood_group, nationality, category, aadhar_number "
                 "FROM students";
 
             // Executing the query
-           unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
-            const int widthEnrollment = 15; // enrollmentno (bigint)
-            const int widthName = 30;       // Name (concatenation of fname, mname, lname)
-            const int widthDepartment = 10; // department (varchar(2))
-            const int widthYear = 6;        // year (varchar(2))
-            const int widthEmail = 30;      // emailid (varchar(50))
-            const int widthMobile = 15;     // mobile (bigint)
-            const int widthBirthdate = 12;  // birthdate (varchar(10))
-            const int widthAddress = 35;    // address (varchar(100))
+            unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
 
-            // Display header without adding extra lines
+            // Column width settings based on your requirements
+            const int widthEnrollment = 15;   // enrollmentno (bigint)
+            const int widthName = 27;         // Name (concatenation of fname, mname, lname)
+            const int widthDepartment = 7;    // department (varchar(2)) reduced space between dept & name
+            const int widthYear = 5;          // year (varchar(2)) reduced gap between dept & year
+            const int widthEmail = 27;        // emailid (varchar(50)) reduced gap between email & mobile
+            const int widthMobile = 15;       // mobile (bigint)
+            const int widthBirthdate = 12;    // birthdate (varchar(10))
+            const int widthAddress = 20;      // address (varchar(100)), nearby 20 characters as you requested
+            const int widthGender = 8;        // gender (varchar(10))
+            const int widthAdmissionDate = 12;// admission_date (date)
+            const int widthGuardianName = 25; // guardian_name (varchar(50))
+            const int widthGuardianContact = 15; // guardian_contact (bigint)
+            const int widthBloodGroup = 5;    // blood_group (varchar(3))
+            const int widthNationality = 15;  // nationality (varchar(30))
+            const int widthCategory = 12;     // category (varchar(20))
+            const int widthAadharNumber = 15; // aadhar_number (bigint)
+
+            // Display header
             cout << left
-                << setw(15) << "Enrollment No"
-                << setw(30) << "Name"
-                << setw(10) << "Dept"
-                << setw(6) << "Year"
-                << setw(30) << "Email ID"
-                << setw(15) << "Mobile"
-                << setw(12) << "Birthdate"
-                << setw(35) << "Address"
+                << setw(widthEnrollment) << "Enrollment No"
+                << setw(widthName) << "Name"
+                << setw(widthDepartment) << "Dept"
+                << setw(widthYear) << "Year"
+                << setw(widthEmail) << "Email ID"
+                << setw(widthMobile) << "Mobile"
+                << setw(widthBirthdate) << "Birthdate"
+                << setw(widthAddress) << "Address"
+                << setw(widthGender) << "Gender"
+                << setw(widthAdmissionDate) << "Admission Date"
+                << setw(widthGuardianName) << "Guardian Name"
+                << setw(widthGuardianContact) << "Guardian Contact"
+                << setw(widthBloodGroup) << "Blood Group"
+                << setw(widthNationality) << "Nationality"
+                << setw(widthCategory) << "Category"
+                << setw(widthAadharNumber) << "Aadhar No"
                 << endl;
 
             // Display separator line
@@ -181,9 +255,17 @@ public:
                 << string(widthMobile, '-')
                 << string(widthBirthdate, '-')
                 << string(widthAddress, '-')
+                << string(widthGender, '-')
+                << string(widthAdmissionDate, '-')
+                << string(widthGuardianName, '-')
+                << string(widthGuardianContact, '-')
+                << string(widthBloodGroup, '-')
+                << string(widthNationality, '-')
+                << string(widthCategory, '-')
+                << string(widthAadharNumber, '-')
                 << endl;
 
-            // Fetch and display each row of data without adding extra lines
+            // Fetch and display each row of data
             while (res->next()) {
                 cout << left
                     << setw(widthEnrollment) << res->getString("enrollmentno")
@@ -194,28 +276,36 @@ public:
                     << setw(widthMobile) << res->getString("mobile")
                     << setw(widthBirthdate) << res->getString("birthdate")
                     << setw(widthAddress) << res->getString("address")
+                    << setw(widthGender) << res->getString("gender")
+                    << setw(widthAdmissionDate) << res->getString("admission_date")
+                    << setw(widthGuardianName) << res->getString("guardian_name")
+                    << setw(widthGuardianContact) << res->getString("guardian_contact")
+                    << setw(widthBloodGroup) << res->getString("blood_group")
+                    << setw(widthNationality) << res->getString("nationality")
+                    << setw(widthCategory) << res->getString("category")
+                    << setw(widthAadharNumber) << res->getString("aadhar_number")
                     << endl;
             }
+
             int choice;
             cout << endl << endl;
             cout << "1. Back to admin menu" << endl;
             cout << "2. Refresh" << endl;
-            cout << "Enter a option:" << endl;;
+            cout << "Enter an option:" << endl;
             cin >> choice;
             cout << endl << endl;
             clearscreen();
+
             if (choice == 1) {
                 adminmenu();
             }
             else if (choice == 2) {
                 showStudentList();
-
             }
             else {
                 cout << "Invalid choice. Please try again." << endl;
                 showStudentList();
             }
-
 
         }
         catch (sql::SQLException& e) {
@@ -224,6 +314,8 @@ public:
             cerr << "SQLState: " << e.getSQLState() << endl;
         }
     }
+
+
 
     void deleteStudent() {
         cout << "Enter enrollment number of the student to delete: ";
@@ -275,14 +367,28 @@ public:
         cin.ignore();
         cout << "Enter address: ";
         getline(cin, address);
-        cout << "Assign teacher id: ";
-        cin >> teacherid;
+        cout << "Enter joining date:";
+        cin >> joining_date;
+        cout << "Enter gender :";
+        cin >> gender;
+        cout << "Enter experience years :";
+        cin >> experience_years;
+        do {                                                                // using do while loop for double confirmation of password
+            cout << "Enter password: ";
+            cin >> password;
+            cout << "Confirm password: ";
+            cin >> confirmPassword;
+
+            if (password != confirmPassword) {
+                cout << "Passwords do not match! Please try again." << endl;
+            }
+        } while (password != confirmPassword);
 
         try {
             stmt = con->createStatement();
-            string insertQuery = "INSERT INTO teachers (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address) VALUES (" +
+            string insertQuery = "INSERT INTO teachers (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password) VALUES (" +
                 to_string(teacherid) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
-                to_string(mobile) + ",'" + birthdate + "','" + address + "')";
+                to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "')";
             stmt->execute(insertQuery);
 
             cout << endl << endl << "Teacher registered successfully!" << endl;
@@ -299,91 +405,110 @@ public:
         clearscreen();
 
         if (choice == 1) {
+            clearscreen();
             registerTeacher();
         }
 
         if (choice == 2) {
+            clearscreen();
             adminmenu();
         }
 
 
-       
+
     }
 
     void showTeacherList() {
         try {
-            stmt = con->createStatement();
-            sql::ResultSet* res = stmt->executeQuery("SELECT * FROM teachers");
+            unique_ptr<sql::Statement> stmt(con->createStatement());
+
+            // SQL query to retrieve teacher data
+            string query = "SELECT teacherid, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
+                "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years "
+                "FROM teachers";
+
+            // Executing the query
+            unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
 
             // Define column widths
-            const int widthID = 10;
-            const int widthName = 15;
-            const int widthDepartment = 12;
-            const int widthEmail = 30;
-            const int widthMobile = 15;
-            const int widthBirthdate = 12;
-            const int widthAddress = 35;
+            const int widthTeacherID = 12; // teacherid (int)
+            const int widthName = 30;       // Name (concatenation of fname, mname, lname)
+            const int widthDepartment = 10; // department (varchar(2))
+            const int widthEmail = 30;      // emailid (varchar(50))
+            const int widthMobile = 15;     // mobile (bigint)
+            const int widthBirthdate = 12;  // birthdate (varchar(10))
+            const int widthAddress = 40;    // address (varchar(200))
+            const int widthJoiningDate = 12; // joining_date (date)
+            const int widthGender = 10;     // gender (varchar(10))
+            const int widthExperience = 15;  // experience_years (int)
 
-            // Print header with appropriate column widths
+            // Display header without adding extra lines
             cout << left
-                << setw(widthID) << "Teacher ID"
-                << setw(widthName) << "First Name"
-                << setw(widthName) << "Middle Name"
-                << setw(widthName) << "Last Name"
-                << setw(widthDepartment) << "Department"
-                << setw(widthEmail) << "Email"
+                << setw(widthTeacherID) << "Teacher ID"
+                << setw(widthName) << "Name"
+                << setw(widthDepartment) << "Dept"
+                << setw(widthEmail) << "Email ID"
                 << setw(widthMobile) << "Mobile"
                 << setw(widthBirthdate) << "Birthdate"
-                << setw(widthAddress) << "Address" << endl;
+                << setw(widthJoiningDate) << "Joining Date"
+                << setw(widthGender) << "Gender"
+                << setw(widthExperience) << "Experience (Years)"
+                << endl;
 
-            // Print separator without spaces
-            cout << string(widthID, '-')
-                << string(widthName, '-')
-                << string(widthName, '-')
+            // Display separator line
+            cout << string(widthTeacherID, '-')
                 << string(widthName, '-')
                 << string(widthDepartment, '-')
                 << string(widthEmail, '-')
                 << string(widthMobile, '-')
                 << string(widthBirthdate, '-')
-                << string(widthAddress, '-') << endl;
+                << string(widthJoiningDate, '-')
+                << string(widthGender, '-')
+                << string(widthExperience, '-')
+                << endl;
 
-            // Display each row of data with proper alignment
+            // Fetch and display each row of data without adding extra lines
             while (res->next()) {
                 cout << left
-                    << setw(widthID) << res->getInt("teacherid")
-                    << setw(widthName) << res->getString("fname")
-                    << setw(widthName) << res->getString("mname")
-                    << setw(widthName) << res->getString("lname")
+                    << setw(widthTeacherID) << res->getInt("teacherid")
+                    << setw(widthName) << res->getString("Name")
                     << setw(widthDepartment) << res->getString("department")
                     << setw(widthEmail) << res->getString("emailid")
-                    << setw(widthMobile) << res->getString("mobile")
+                    << setw(widthMobile) << res->getInt("mobile")
                     << setw(widthBirthdate) << res->getString("birthdate")
-                    << setw(widthAddress) << res->getString("address") << endl;
+                    << setw(widthJoiningDate) << res->getString("joining_date")
+                    << setw(widthGender) << res->getString("gender")
+                    << setw(widthExperience) << res->getInt("experience_years")
+                    << endl;
             }
 
-            delete res;
-
-            // New lines added here
-            cout << endl << endl
-                << "1. Refresh" << endl
-                << "2. Back to admin menu" << endl
-                << "Enter a option:";
+            // Prompt for next action
+            int choice;
+            cout << endl << "1. Back to admin menu" << endl;
+            cout << "2. Refresh" << endl;
+            cout << "Enter your option: ";
             cin >> choice;
-            clearscreen();
+            cout << endl;
 
+            clearscreen(); // Assuming clearscreen() is defined elsewhere
             if (choice == 1) {
-                showTeacherList();
+                adminmenu(); // Assuming adminmenu() is defined elsewhere
             }
-
-            if (choice == 2) {
-                adminmenu();
+            else if (choice == 2) {
+                showTeacherList(); // Refresh the list
             }
-
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                showTeacherList(); // Retry showing the list
+            }
         }
         catch (sql::SQLException& e) {
-            cerr << "SQL Error: " << e.what() << endl;
+            cerr << "SQLException: " << e.what() << endl;
+            cerr << "MySQL error code: " << e.getErrorCode() << endl;
+            cerr << "SQLState: " << e.getSQLState() << endl;
         }
     }
+
 
     void deleteTeacher() {
         cout << "Enter teacher ID of the teacher to delete: ";
@@ -418,16 +543,49 @@ public:
 
 };
 
+class teacher : public common_variables {
+private:
+    string emailid,password;
+public:
+    void teachermenu() {
+        cout << "Welcome to Teacher dashboard" << endl;
+        cout << "1. View my class" << endl
+            << "2. Etc" << endl 
+            << "Enter a option:";
+        cin >> choice;
+
+        if (choice == 1) {
+            viewmystudents();
+        }
+    }
+    void loginteacher() {
+        cout << "  Teacher login   ";
+        cout << "Enter Email id:";
+        cin >> emailid;
+        cout << "Enter password";
+        cin >> password;
+
+    }
+
+    void viewmystudents() {
+
+    }
+   
+};
+
 
 void mainscreen() {
     admin a;
+    teacher t;
     common_variables var;
     string username, password;
+mainre:
     cout << "Welcome to Government Polytechnic Awasari" << endl << endl
         << "1. Student login" << endl
         << "2. Teacher login" << endl
-        << "3. Admin login" << endl
-        << "4. Exit" << endl
+        << "3. HOD login" << endl
+        << "4. Admin login" << endl
+        << "5. Exit" << endl
         << "Enter your choice: ";
     cin >> var.choice;
     cout << endl;
@@ -437,11 +595,10 @@ void mainscreen() {
         mainscreen();
     }
 
-    if (var.choice == 2) {
-        cout << "Service under development!" << endl;
-        mainscreen();
+    else if (var.choice == 2) {
+        t.loginteacher();
     }
-    if (var.choice == 3) {
+    else if (var.choice == 4) {
     adminreenter:
         cout << "   Admin login   " << endl << endl;
         cout << "Enter admin username: ";
@@ -458,7 +615,7 @@ void mainscreen() {
             cout << "Admin login successful!" << endl << endl;
             a.adminmenu();
         }
-        else { 
+        else {
             cout << "Invalid username or password!" << endl << endl;
             cout << "1. Try again" << endl;
             cout << "2. Back to main menu" << endl;
@@ -474,8 +631,16 @@ void mainscreen() {
             }
         }
     }
-    if (var.choice == 4) {
+    else if (var.choice == 5) {
         exit(0);
+    }
+    else if (var.choice == 3) {
+        cout << "Service under development!" << endl;
+        mainscreen();
+    }
+    else {
+        cout << "Enter a valid choice !" << endl << endl;
+        goto mainre;
     }
 }
 

@@ -17,6 +17,8 @@ void mainscreen();
 sql::mysql::MySQL_Driver* driver; // Global variables to establish connection between Database and program
 sql::Connection* con;
 sql::Statement* stmt;
+sql::PreparedStatement* pstmt;
+sql::ResultSet* res;
 
 
 class common_variables { //Class used for variables which are used through out the program
@@ -545,31 +547,104 @@ public:
 
 class teacher : public common_variables {
 private:
-    string emailid,password;
+    string emailid,password,department,fname,lname;
 public:
+
+    teacher() {
+        try {
+            // Initialize the MySQL driver and connection
+            driver = sql::mysql::get_mysql_driver_instance();
+            con = driver->connect("tcp://127.0.0.1:3306", "root", "12345"); // Change the username and password as needed
+            con->setSchema("GPA_db"); // Replace 'student_db' with your database name
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+            exit(EXIT_FAILURE);
+        }
+    }
     void teachermenu() {
-        cout << "Welcome to Teacher dashboard" << endl;
+        clearscreen();
+        cout << "Welcome " << fname << "!" << endl << endl <<endl;
+        cout << "Teacher Dashboard" << endl << endl;
         cout << "1. View my class" << endl
             << "2. Etc" << endl 
             << "Enter a option:";
         cin >> choice;
 
         if (choice == 1) {
-            viewmystudents();
+            //viewmystudents();
         }
     }
-    void loginteacher() {
-        cout << "  Teacher login   ";
-        cout << "Enter Email id:";
-        cin >> emailid;
-        cout << "Enter password";
-        cin >> password;
+    bool loginTeacher(string& emailid, string& password) {
+        bool isLoggedIn = false;  // Flag to control the loop
+        int choice;
 
+        while (!isLoggedIn) {
+            try {
+                pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM teachers WHERE emailid = ?");
+                pstmt->setString(1, emailid);
+
+                res = pstmt->executeQuery();
+
+                if (res->next()) {
+                    string storedPassword = res->getString("password");
+                    department = res->getString("department");
+                    fname = res->getString("fname");
+                    lname = res->getString("lname");
+
+                    if (storedPassword == password) {
+                        // If the password is correct, go to the teacher menu
+                        teachermenu();
+                        delete res;
+                        delete pstmt;
+                        delete con;
+                        return true;  // Login success
+                    }
+                    else {
+                        // If the password is incorrect
+                        cout << "Incorrect password." << endl << endl;
+                        cout << "1. Enter Password again." << endl
+                            << "2. Go back to main menu" << endl
+                            << "Enter an option: ";
+                        cin >> choice;
+
+                        if (choice == 1) {
+                            // Re-enter the password and retry login
+                            cout << "Enter Password: ";
+                            cin >> password;  // Prompt for password again
+                            clearscreen();
+                        }
+                        else if (choice == 2) {
+                            clearscreen();
+                            mainscreen();  // Go back to main menu
+                            break;  // Exit the loop if user chooses to go back to the main menu
+                        }
+                        else {
+                            cout << "Invalid option, please try again." << endl;
+                        }
+                    }
+                }
+                else {
+                    // If the email is not found
+                    cout << "Email ID not found.\n";
+                    break;  // Exit the loop if the email ID is not found
+                }
+
+                // Clean up resources after each query attempt
+                delete res;
+                delete pstmt;
+
+            }
+            catch (sql::SQLException& e) {
+                std::cerr << "Error during login: " << e.what() << std::endl;
+            }
+        }
+
+        delete con;  // Ensure connection is closed when exiting the loop
+        return false;  // Login failed
     }
 
-    void viewmystudents() {
 
-    }
    
 };
 
@@ -596,7 +671,12 @@ mainre:
     }
 
     else if (var.choice == 2) {
-        t.loginteacher();
+        string emailid,pass;
+        cout << "Enter your email id : ";
+        cin >> emailid;
+        cout << "Enter password :";
+        cin >> pass;
+        t.loginTeacher(emailid,pass);
     }
     else if (var.choice == 4) {
     adminreenter:

@@ -2,36 +2,44 @@
 #include <string>                           //  for  string
 #include <cstdlib>                          // for  exit  
 #include <iomanip>                          // For output Formatting
-#include <cppconn/driver.h>                 // for  mysql connector
-#include <cppconn/exception.h>              // for  mysql exception
-#include <cppconn/statement.h>              // for  mysql statement
-#include <cppconn/prepared_statement.h>
-#include <cppconn/resultset.h>
-#include <mysql_driver.h>
-#include <mysql_connection.h>
-
+#include <string>                           // for string related  functions
+#include <mysql_driver.h>                   // for mysql driver object
+#include <mysql_connection.h>               // for mysql connection object                  
+#include <cppconn/statement.h>              // for mysql command passing parameters
+#include <cppconn/prepared_statement.h>     // for prepared statement
+#include <cppconn/resultset.h>              // for retreving the resul set from database    
+#include <cppconn/exception.h>              // for hadnling error coming through database           
+           
 using namespace std;
-
-void mainscreen();
+void mainscreen();                  // Declaration of mainscreen function
 
 sql::mysql::MySQL_Driver* driver; // Global variables to establish connection between Database and program
 sql::Connection* con;
-sql::Statement* stmt;
 sql::PreparedStatement* pstmt;
 sql::ResultSet* res;
 
+class Database {            // Database class for managing connection
+public:
+    sql::Connection* getConnection() {
+    sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
+    sql::Connection* con = driver->connect("tcp://127.0.0.1:3306", "root", "12345");
+        con->setSchema("GPA_db");
+        return con;
+    }
+    static void closeConnection() {
+        delete con;
+    }
+};
 
 class common_variables { //Class used for variables which are used through out the program
 public:
     int choice;
 };
-
-void clearscreen() {
+void clearscreen() {            // function from clearinng screen by using sysytem("cls") frm <cstlib> file
     system("cls");
 }
 
-class admin : public common_variables {
-private:
+class admin : public common_variables {         //This class handles all the functions for the admin and holds variables for the admin
     string fname, mname, lname;
     string department;
     string year;
@@ -53,22 +61,8 @@ private:
     string joining_date;
     int experience_years;
 
-
 public:
-    admin() {
-        try {
-            // Initialize the MySQL driver and connection
-            driver = sql::mysql::get_mysql_driver_instance();
-            con = driver->connect("tcp://127.0.0.1:3306", "root", "12345"); // Change the username and password as needed
-            con->setSchema("GPA_db"); // Replace 'student_db' with your database name
-        }
-        catch (sql::SQLException& e) {
-            cerr << "SQL Error: " << e.what() << endl;
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    void adminmenu() {
+	void adminmenu() {                                          //Displays the admin menu
         cout << "Welcome to Admin Dashboard" << endl << endl;
         admin_choice_re:
         cout << "1. Register Student" << endl;
@@ -83,7 +77,7 @@ public:
         clearscreen();
 
         if (choice == 1) {
-            registerStudent();
+            registerStudent();                      //else_if ladder as subtitute of switch case statement
         }
         else if (choice == 2) {
             showStudentList();
@@ -105,12 +99,12 @@ public:
             mainscreen();
         }
         else {
-            cout << "Enter a Valid option !";
+			cout << "Enter a Valid option !";       //handle a exception if user entered a wrong option
             goto admin_choice_re;
         }
     }
 
-    bool registerStudent() {
+	bool registerStudent() {                        // Function to register a student 
         cout << "Enter first name: ";
         cin >> fname;
         cout << "Enter middle name: ";
@@ -162,11 +156,11 @@ public:
         } while (password != confirmPassword);
 
         try {
-            stmt = con->createStatement();
+            unique_ptr<sql::Statement> stmt(con->createStatement());                             //createing statement object for query
             string insertQuery = "INSERT INTO students (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password, gender, admission_date, guardian_name,guardian_contact, blood_group, nationality, category, aadhar_number) VALUES (" +
                 to_string(enrollmentno) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + year + "','" + emailid + "'," +
                 to_string(mobile) + ",'" + birthdate + "','" + address + "','" + password + "', '" + gender + "', '" + addmission_date + "', '" + guardian_name + "', " + to_string(guardian_mobile) + ", '" + blood_grp + "', '" + nationality + "', '" + category + "', '" + aadhar_number + "')";
-            stmt->execute(insertQuery);
+			stmt->execute(insertQuery);     //by using execute function query is sent to Database engine
 
             cout << endl << "Registration successful!" << endl << endl;
         register_re:
@@ -190,9 +184,9 @@ public:
             clearscreen();
             adminmenu();
         }
-        catch (sql::SQLException& e) {
+		catch (sql::SQLException& e) {                      //this block prints the error message given by database engine
             cerr << "SQL Error: " << e.what() << endl;
-            registerStudent();
+			registerStudent(); // calls registerStudent() again to register the student
         }
         return true;
     }
@@ -320,11 +314,12 @@ public:
 
 
     void deleteStudent() {
+        unique_ptr<sql::Statement> stmt(con->createStatement());
         cout << "Enter enrollment number of the student to delete: ";
         cin >> enrollmentno;
 
         try {
-            stmt = con->createStatement();
+            
             string deleteQuery = "DELETE FROM students WHERE enrollmentno = " + to_string(enrollmentno);
             stmt->execute(deleteQuery);
 
@@ -387,7 +382,7 @@ public:
         } while (password != confirmPassword);
 
         try {
-            stmt = con->createStatement();
+            unique_ptr<sql::Statement> stmt(con->createStatement());
             string insertQuery = "INSERT INTO teachers (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password) VALUES (" +
                 to_string(teacherid) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
                 to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "')";
@@ -517,7 +512,7 @@ public:
         cin >> teacherid;
 
         try {
-            stmt = con->createStatement();
+            unique_ptr<sql::Statement> stmt(con->createStatement());
             string deleteQuery = "DELETE FROM teachers WHERE teacherid = " + to_string(teacherid);
             stmt->execute(deleteQuery);
 
@@ -627,6 +622,21 @@ public:
                 else {
                     // If the email is not found
                     cout << "Email ID not found.\n";
+                    cout << "1. Go back to main menu" << endl
+                        << "2. Try again" << endl
+                        << "Enter a option:";
+
+                    cin >> choice;
+                    if (choice == 1) {
+                        clearscreen();
+                        mainscreen();
+
+                    }
+                    else if (choice == 2) {
+                        clearscreen();
+                       
+                    }
+                   
                     break;  // Exit the loop if the email ID is not found
                 }
 

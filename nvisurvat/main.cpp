@@ -383,7 +383,7 @@ public:
 
         try {
             unique_ptr<sql::Statement> stmt(con->createStatement());
-            string insertQuery = "INSERT INTO teachers (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password) VALUES (" +
+            string insertQuery = "INSERT INTO faculty (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password) VALUES (" +
                 to_string(teacherid) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
                 to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "')";
             stmt->execute(insertQuery);
@@ -422,7 +422,7 @@ public:
             // SQL query to retrieve teacher data
             string query = "SELECT teacherid, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years "
-                "FROM teachers";
+                "FROM faculty";
 
             // Executing the query
             unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
@@ -513,7 +513,7 @@ public:
 
         try {
             unique_ptr<sql::Statement> stmt(con->createStatement());
-            string deleteQuery = "DELETE FROM teachers WHERE teacherid = " + to_string(teacherid);
+            string deleteQuery = "DELETE FROM faculty WHERE teacherid = " + to_string(teacherid);
             stmt->execute(deleteQuery);
 
             cout << "Teacher record deleted successfully!" << endl;
@@ -560,7 +560,7 @@ public:
     bool loginTeacher(string& emailid, string& password) {
         int choice;
             try {
-                pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM teachers WHERE emailid = ?");
+                pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM faculty WHERE emailid = ?");
                 pstmt->setString(1, emailid);
 
                 res = pstmt->executeQuery();
@@ -582,20 +582,30 @@ public:
                     else {
                         // If the password is incorrect
                         cout << "Incorrect password." << endl << endl;
-                        cout << "1. Go back to main menu" << endl
+                        cout << "1. Enter Password again." << endl
+                            << "2. Go back to main menu" << endl
                             << "Enter an option: ";
                         cin >> choice;
 
                         if (choice == 1) {
+                            // Re-enter the password and retry login
+                            cout << "Enter Password: ";
+                            cin >> password;  // Prompt for password again
                             clearscreen();
-                            mainscreen();
+                        }
+                        else if (choice == 2) {
+                            clearscreen();
+                            mainscreen();  // Go back to main menu
+                            break;  // Exit the loop if user chooses to go back to the main menu
                         }
                         else {
                             cout << "Invalid option, please try again." << endl;
+                            goto teacher_exception1_re;
                         }
                     }
                 }
                 else {
+                    teacher_exception2_re:
                     // If the email is not found
                     cout << "Email ID not found.\n";
                     cout << "1. Go back to main menu" << endl
@@ -607,8 +617,9 @@ public:
                         mainscreen();
 
                     }
-                    else {
-                        cout << "Invalid option, please try again." << endl;
+                    else if (choice == 2) {
+                        clearscreen();
+                       
                     }
                 }
 

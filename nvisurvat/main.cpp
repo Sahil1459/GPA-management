@@ -215,20 +215,20 @@ public:
 
             // Column width settings based on your requirements
             const int widthEnrollment = 15; // enrollmentno (bigint)
-            const int widthName = 27; // Name (concatenation of fname, mname, lname)
-            const int widthDepartment = 7; // department (varchar(2)) reduced space between dept & name
-            const int widthYear = 5; // year (varchar(2)) reduced gap between dept & year
+            const int widthName = 25; // Name (concatenation of fname, mname, lname)
+            const int widthDepartment = 6; // department (varchar(2)) reduced space between dept & name
+            const int widthYear = 6; // year (varchar(2)) reduced gap between dept & year
             const int widthEmail = 27; // emailid (varchar(50)) reduced gap between email & mobile
-            const int widthMobile = 15; // mobile (bigint)
+            const int widthMobile = 12; // mobile (bigint)
             const int widthBirthdate = 12; // birthdate (varchar(10))
-            const int widthAddress = 20; // address (varchar(100)), nearby 20 characters as you requested
+            const int widthAddress = 30; // address (varchar(100)), nearby 20 characters as you requested
             const int widthGender = 8; // gender (varchar(10))
-            const int widthAdmissionDate = 12; // admission_date (date)
-            const int widthGuardianName = 25; // guardian_name (varchar(50))
-            const int widthGuardianContact = 15; // guardian_contact (bigint)
-            const int widthBloodGroup = 5; // blood_group (varchar(3))
-            const int widthNationality = 15; // nationality (varchar(30))
-            const int widthCategory = 12; // category (varchar(20))
+            const int widthAdmissionDate = 18; // admission_date (date)
+            const int widthGuardianName = 20; // guardian_name (varchar(50))
+            const int widthGuardianContact = 19; // guardian_contact (bigint)
+            const int widthBloodGroup = 10; // blood_group (varchar(3))
+            const int widthNationality = 13; // nationality (varchar(30))
+            const int widthCategory = 10; // category (varchar(20))
             const int widthAadharNumber = 15; // aadhar_number (bigint)
 
             // Display header
@@ -245,7 +245,7 @@ public:
                 setw(widthAdmissionDate) << "Admission Date" <<
                 setw(widthGuardianName) << "Guardian Name" <<
                 setw(widthGuardianContact) << "Guardian Contact" <<
-                setw(widthBloodGroup) << "Blood Group" <<
+                setw(widthBloodGroup) << "Blood G." <<
                 setw(widthNationality) << "Nationality" <<
                 setw(widthCategory) << "Category" <<
                 setw(widthAadharNumber) << "Aadhar No" <<

@@ -69,6 +69,7 @@ protected:
     string aadhar_number;
     string joining_date;
     int experience_years;
+    string post;
 
 public:
     void adminmenu() { //Displays the admin menu
@@ -130,19 +131,19 @@ public:
         cin >> emailid;
         cout << "Enter mobile number: ";
         cin >> mobile;
-        cout << "Enter birthdate (dd/mm/yyyy): ";
+        cout << "Enter birthdate (dd/mm/yy): ";
         cin >> birthdate;
         cin.ignore();
-        cout << "Enter Gender (M/F):";
+        cout << "Enter Gender (Male/Female/Other):";
         cin >> gender;
-        cout << "Enter admission date:";
+        cout << "Enter admission date(dd/mm/yy):";
         cin >> addmission_date;
         cout << "Enter Guardian Full name:";
         cin.ignore();
         getline(cin, guardian_name);
         cout << "Enter guardian mobile no. :";
         cin >> guardian_mobile;
-        cout << "Enter blood group:";
+        cout << "Enter blood group (A+/A-/B+/B-/AB+/AB-/O+/O-):";
         cin >> blood_grp;
         cout << "Enter nationality:";
         cin >> nationality;
@@ -165,8 +166,19 @@ public:
         } while (password != confirmPassword);
 
         try {
+
             unique_ptr < sql::Statement > stmt(con->createStatement()); //createing statement object for query
-            string insertQuery = "INSERT INTO students (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password, gender, admission_date, guardian_name,guardian_contact, blood_group, nationality, category, aadhar_number) VALUES (" +
+
+            // SQL query to create a table 
+            string createTableSQL
+                = "CREATE TABLE IF NOT EXISTS students_info("
+                "enrollmentno BIGINT PRIMARY KEY," "fname VARCHAR(50) NOT NULL," "mname VARCHAR(50)," "lname VARCHAR(50) NOT NULL," "department ENUM('IF','CO','EJ','CE','ME','EE','AE')NOT NULL,"
+                "year ENUM('FY','SY','TY') NOT NULL," "emailid VARCHAR(100) NOT NULL," "mobile BIGINT NOT NULL," "birthdate DATE," "address VARCHAR(255)," "password VARCHAR(255) NOT NULL,"
+                "gender ENUM('Male', 'Female', 'Other') NOT NULL,""admission_date DATE,""guardian_name VARCHAR(100),""guardian_contact BIGINT,""blood_group ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),"
+                "nationality VARCHAR(50),""category VARCHAR(50),""aadhar_number VARCHAR(12)"")";
+
+            stmt->execute(createTableSQL);
+            string insertQuery = "INSERT INTO students_info (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password, gender, admission_date, guardian_name,guardian_contact, blood_group, nationality, category, aadhar_number) VALUES (" +
                 to_string(enrollmentno) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + year + "','" + emailid + "'," +
                 to_string(mobile) + ",'" + birthdate + "','" + address + "','" + password + "', '" + gender + "', '" + addmission_date + "', '" + guardian_name + "', " + to_string(guardian_mobile) + ", '" + blood_grp + "', '" + nationality + "', '" + category + "', '" + aadhar_number + "')";
             stmt->execute(insertQuery); //by using execute function query is sent to Database engine
@@ -208,7 +220,7 @@ public:
             string query = "SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, year, emailid, mobile, birthdate, address, gender, admission_date, "
                 "guardian_name, guardian_contact, blood_group, nationality, category, aadhar_number "
-                "FROM students";
+                "FROM students_info";
 
             // Executing the query
             unique_ptr < sql::ResultSet > res(stmt->executeQuery(query));
@@ -327,7 +339,7 @@ public:
 
         try {
 
-            string deleteQuery = "DELETE FROM students WHERE enrollmentno = " + to_string(enrollmentno);
+            string deleteQuery = "DELETE FROM students_info WHERE enrollmentno = " + to_string(enrollmentno);
             stmt->execute(deleteQuery);
 
             cout << "Student record deleted successfully!" << endl;
@@ -376,6 +388,8 @@ public:
         cin >> gender;
         cout << "Enter experience years :";
         cin >> experience_years;
+        cout << "Enter Post(Faculty/HOD):";
+		cin >> post;
         do { // using do while loop for double confirmation of password
             cout << "Enter password: ";
             cin >> password;
@@ -389,9 +403,9 @@ public:
 
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
-            string insertQuery = "INSERT INTO faculty (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password) VALUES (" +
+            string insertQuery = "INSERT INTO faculty (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password,post) VALUES (" +
                 to_string(teacherid) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
-                to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "')";
+                to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "','"+ post +"')";
             stmt->execute(insertQuery);
 
             cout << endl << endl << "Faculty registered successfully!" << endl;
@@ -423,7 +437,7 @@ public:
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
             string query = "SELECT teacherid, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
-                "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years "
+                "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,post "
                 "FROM faculty";
 
             // Executing the query
@@ -431,15 +445,16 @@ public:
 
             // Define column widths
             const int widthFacultyID = 12; // Facultyid (int)
-            const int widthName = 30; // Name (concatenation of fname, mname, lname)
-            const int widthDepartment = 10; // department (varchar(2))
-            const int widthEmail = 30; // emailid (varchar(50))
+            const int widthName = 25; // Name (concatenation of fname, mname, lname)
+            const int widthDepartment = 7; // department (varchar(2))
+            const int widthEmail = 25; // emailid (varchar(50))
             const int widthMobile = 15; // mobile (bigint)
-            const int widthBirthdate = 12; // birthdate (varchar(10))
+            const int widthBirthdate = 15; // birthdate (varchar(10))
             const int widthAddress = 40; // address (varchar(200))
             const int widthJoiningDate = 12; // joining_date (date)
             const int widthGender = 10; // gender (varchar(10))
-            const int widthExperience = 15; // experience_years (int)
+            const int widthExperience = 20; // experience_years (int)
+            const int widthPost = 10;
 
             // Display header without adding extra lines
             cout << left <<
@@ -452,6 +467,7 @@ public:
                 setw(widthJoiningDate) << "Joining Date" <<
                 setw(widthGender) << "Gender" <<
                 setw(widthExperience) << "Experience (Years)" <<
+                setw(widthPost) << "Post" <<
                 endl;
 
             // Display separator line
@@ -464,6 +480,7 @@ public:
                 string(widthJoiningDate, '-') <<
                 string(widthGender, '-') <<
                 string(widthExperience, '-') <<
+                string(widthPost,'-') <<
                 endl;
 
             // Fetch and display each row of data without adding extra lines
@@ -478,6 +495,7 @@ public:
                     setw(widthJoiningDate) << res->getString("joining_date") <<
                     setw(widthGender) << res->getString("gender") <<
                     setw(widthExperience) << res->getInt("experience_years") <<
+                    setw(widthPost) << res->getString("post") <<
                     endl;
             }
 

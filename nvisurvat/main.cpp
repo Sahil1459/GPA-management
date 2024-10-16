@@ -29,7 +29,12 @@ sql::PreparedStatement* pstmt;
 sql::ResultSet* res;
 
 class Database { // Database class for managing connection
-public: sql::Connection* getConnection() {
+   
+    
+public: 
+
+      
+    sql::Connection* getConnection() {
     sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
     sql::Connection* con = driver->connect("tcp://127.0.0.1:3306", "root", "12345");
     con->setSchema("GPA_db");
@@ -170,14 +175,7 @@ public:
             unique_ptr < sql::Statement > stmt(con->createStatement()); //createing statement object for query
 
             // SQL query to create a table 
-            string createTableSQL
-                = "CREATE TABLE IF NOT EXISTS students_info("
-                "enrollmentno BIGINT PRIMARY KEY," "fname VARCHAR(50) NOT NULL," "mname VARCHAR(50)," "lname VARCHAR(50) NOT NULL," "department ENUM('IF','CO','EJ','CE','ME','EE','AE')NOT NULL,"
-                "year ENUM('FY','SY','TY') NOT NULL," "emailid VARCHAR(100) NOT NULL," "mobile BIGINT NOT NULL," "birthdate DATE," "address VARCHAR(255)," "password VARCHAR(255) NOT NULL,"
-                "gender ENUM('Male', 'Female', 'Other') NOT NULL,""admission_date DATE,""guardian_name VARCHAR(100),""guardian_contact BIGINT,""blood_group ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'),"
-                "nationality VARCHAR(50),""category VARCHAR(50),""aadhar_number VARCHAR(12)"")";
-
-            stmt->execute(createTableSQL);
+            
             string insertQuery = "INSERT INTO students_info (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password, gender, admission_date, guardian_name,guardian_contact, blood_group, nationality, category, aadhar_number) VALUES (" +
                 to_string(enrollmentno) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + year + "','" + emailid + "'," +
                 to_string(mobile) + ",'" + birthdate + "','" + address + "','" + password + "', '" + gender + "', '" + addmission_date + "', '" + guardian_name + "', " + to_string(guardian_mobile) + ", '" + blood_grp + "', '" + nationality + "', '" + category + "', '" + aadhar_number + "')";
@@ -605,20 +603,22 @@ public:
         cout << "Faculty Dashboard" << endl << endl;
         cout << "1. View my class" << endl <<
             "2. Etc" << endl <<
+			"3. Logout" << endl << endl;
             "Enter a option:";
         cin >> choice;
 
         if (choice == 1) {
             viewMyclass();
         }
+        else if (choice == 9) {
+            clearscreen();
+            mainscreen();
+        }
     }
     bool loginFaculty(string& emailid, string& password) {
-        bool isLoggedIn = false; // Flag to control the loop
         int choice;
-
-        while (!isLoggedIn) {
             try {
-                pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM faculty WHERE emailid = ?");
+                pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM faculty_info WHERE emailid = ?");
                 pstmt->setString(1, emailid);
 
                 res = pstmt->executeQuery();
@@ -649,7 +649,6 @@ public:
                         if (choice == 1) {
                             clearscreen();
                             mainscreen(); // Go back to main menu
-                            break; // Exit the loop if user chooses to go back to the main menu
                         }
                         else {
                             cout << "Invalid option, please try again." << endl;
@@ -675,8 +674,6 @@ public:
                         cout << "Invalid option, please try again." << endl;
                         goto Faculty_exception2_re;
                     }
-
-                    break; // Exit the loop if the email ID is not found
                 }
 
                 // Clean up resources after each query attempt
@@ -687,7 +684,7 @@ public:
             catch (sql::SQLException& e) {
                 std::cerr << "Error during login: " << e.what() << std::endl;
             }
-        }
+        
 
         delete con; // Ensure connection is closed when exiting the loop
         return false; // Login failed
@@ -722,7 +719,7 @@ public:
 	}
    void  viewMyclassQuery(string year) {
        sql::Connection* con = getConnection();
-       sql::PreparedStatement* pstmt = con->prepareStatement("SELECT enrollmentno,concat(fname,' ',mname,' ',lname) AS name, emailid,mobile,gender,guardian_name,guardian_contact FROM students WHERE department = ? AND year = ?;");
+       sql::PreparedStatement* pstmt = con->prepareStatement("SELECT enrollmentno,concat(fname,' ',mname,' ',lname) AS name, emailid,mobile,gender,guardian_name,guardian_contact FROM students_info WHERE department = ? AND year = ?;");
        pstmt->setString(1, department);
        pstmt->setString(2, year);
        sql::ResultSet* res = pstmt->executeQuery();
@@ -770,9 +767,119 @@ public:
     
 };
 
+class hod : public common_variables,public Database{
+private:
+    string fname;
+public:
+    string course_code, exam_date, exam_time, exam_duration, course_name,year,dept;
+    int max_marks, passing_marks;
+
+    
+	void hodmenu() {
+        clearscreen();
+		cout << "Welcome " << fname << endl << endl;
+		cout << "Head of Department Dashboard" << endl;
+        cout << "1. View students" << endl <<
+            "2. View faculty" << endl <<
+            "3. View course details" << endl <<
+            "4. Add course" << endl <<
+            "5. Delete course" << endl <<
+            "6. Add Exam" << endl;
+		cout <<	"7. View exam details" << endl << 
+			"8. Logout" << endl <<
+			"Enter a option:";
+		cin >> choice;
+        if (choice == 1) {
+			//viewStudents();
+        }
+		else if (choice == 2) {
+			//viewFaculty();
+        }
+		else if (choice == 3) {
+			//viewCourseDetails();
+        }
+        else if (choice == 4) {
+			//addCourse();
+        }
+		else if (choice == 5) {
+			//deleteCourse();
+        }
+		else if (choice == 6) {
+            addExam();
+
+        }
+		else if (choice == 7) {
+            //viewExam();
+        }
+		else if (choice == 8) {
+            clearscreen();
+            mainscreen();
+        }
+    }
+
+    void addExam() {
+        clearscreen();
+		cout << "Add Exam" << endl << endl
+			<< "Enter course code: ";
+		cin >> course_code;
+		cout << "Enter subject name: ";
+        cin.ignore();
+        getline(cin, course_name);
+        cout << "Enter Year(FY/SY/TY):";
+        cin >> year;
+		cout << "Enter exam date(DD/MM/YY): ";
+		cin >> exam_date;
+		cout << "Enter exam time(HH:MM): ";
+		cin >> exam_time;
+		cout << "Enter exam duration(HH:MM): ";
+		cin >> exam_duration;
+		cout << "Enter maximum marks(Total): ";
+		cin >> max_marks;
+		cout << "Enter passing marks(Minimum): ";
+		cin >> passing_marks;
+        try {
+			sql::Connection* con = getConnection();
+			sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks,course_name,dept,year) VALUES (?,?,?,?,?,?,?,?,?)");
+			pstmt->setString(1, course_code);
+			pstmt->setString(2, exam_date);
+			pstmt->setString(3, exam_time);
+			pstmt->setString(4, exam_duration);
+			pstmt->setInt(5, max_marks);
+			pstmt->setInt(6, passing_marks);
+			pstmt->setString(7, course_name);
+			pstmt->setString(8, dept);
+			pstmt->setString(9, year);
+            pstmt->execute();
+			cout << "Exam added successfully." << endl;
+			delete pstmt;
+			delete con;
+
+			cout << endl;
+            hod_add_exam:
+            cout << "1. Back to HOD Dashborad" << endl
+                << "Enter a choice: ";
+            cin >> choice;
+            if (choice == 1) {
+				clearscreen();
+                hodmenu();
+            }
+            else {
+                cout << "Invalid choice !! " << endl;
+                goto hod_add_exam;
+					
+            }
+		}
+        catch(sql::SQLException& e){
+            cout << "Error : " << e.what() << endl;
+        }
+
+	}
+};
+
 void mainscreen() {
     admin a;
     Faculty t;
+	hod h;
     common_variables
         var;
     string username, password;
@@ -836,7 +943,7 @@ mainre:
         exit(0);
     }
     else if (var.choice == 3) {
-        cout << "Service under development!" << endl;
+		h.hodmenu();
         mainscreen();
     }
     else {

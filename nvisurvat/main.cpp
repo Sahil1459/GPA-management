@@ -57,7 +57,7 @@ protected:
     string address;
     long long int enrollmentno;
     long long int mobile;
-    int teacherid;
+    int faculty_id;
     string password, confirmPassword;
     string gender;
     string addmission_date;
@@ -377,14 +377,14 @@ public:
         cin >> mobile;
         cout << "Enter department (IF / CO / EJ / CE / ME / EE /AE): ";
         cin >> department;
-        cout << "Enter birthdate (dd/mm/yyyy): ";
+        cout << "Enter birthdate (dd/mm/yy): ";
         cin >> birthdate;
         cin.ignore();
         cout << "Enter address: ";
         getline(cin, address);
-        cout << "Enter joining date:";
+        cout << "Enter joining date(dd/mm/yy):";
         cin >> joining_date;
-        cout << "Enter gender :";
+        cout << "Enter gender(Male/Female/Other):";
         cin >> gender;
         cout << "Enter experience years :";
         cin >> experience_years;
@@ -403,8 +403,26 @@ public:
 
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
-            string insertQuery = "INSERT INTO faculty (teacherid, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password,post) VALUES (" +
-                to_string(teacherid) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
+            string createQuery = "CREATE TABLE faculty_info ("
+                "faculty_id INT NOT NULL AUTO_INCREMENT,"
+                "fname VARCHAR(20),"
+                "mname VARCHAR(20),"
+                "lname VARCHAR(20),"
+                "department ENUM('IF', 'CO', 'EE', 'EJ', 'ME', 'AE', 'CE'),"
+                "emailid VARCHAR(50),"
+                "mobile BIGINT,"
+                "birthdate DATE,"
+                "address VARCHAR(200),"
+                "joining_date DATE,"
+                "gender ENUM('Male', 'Female', 'Other'),"
+                "experience_years INT,"
+                "post ENUM('Faculty', 'HOD'),"
+                "password VARCHAR(20),"
+                "PRIMARY KEY(faculty_id)"")";
+            stmt->execute(createQuery);
+
+            string insertQuery = "INSERT INTO faculty_info (faculty_id, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password,post) VALUES (" +
+                to_string(faculty_id) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
                 to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "','"+ post +"')";
             stmt->execute(insertQuery);
 
@@ -436,9 +454,9 @@ public:
     void showFacultyList() {
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
-            string query = "SELECT teacherid, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
+            string query = "SELECT faculty_id, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,post "
-                "FROM faculty";
+                "FROM faculty_info";
 
             // Executing the query
             unique_ptr < sql::ResultSet > res(stmt->executeQuery(query));
@@ -486,7 +504,7 @@ public:
             // Fetch and display each row of data without adding extra lines
             while (res->next()) {
                 cout << left <<
-                    setw(widthFacultyID) << res->getInt("teacherid") <<
+                    setw(widthFacultyID) << res->getInt("faculty_id") <<
                     setw(widthName) << res->getString("Name") <<
                     setw(widthDepartment) << res->getString("department") <<
                     setw(widthEmail) << res->getString("emailid") <<
@@ -527,12 +545,12 @@ public:
     }
 
     void deleteFaculty() {
-        cout << "Enter Faculty ID of the teacher to delete: ";
-        cin >> teacherid;
+        cout << "Enter Faculty ID of the Faculty to delete: ";
+        cin >> faculty_id;
 
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
-            string deleteQuery = "DELETE FROM faculty WHERE teacherid = " + to_string(teacherid);
+            string deleteQuery = "DELETE FROM faculty WHERE faculty_id = " + to_string(faculty_id);
             stmt->execute(deleteQuery);
 
             cout << "Faculty record deleted successfully!" << endl;

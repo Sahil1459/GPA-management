@@ -672,51 +672,65 @@ public:
         cin >> choice;
 
         if (choice == 1) {
-
-            sql::Connection* con = getConnection();
-            sql::PreparedStatement* pstmt = con->prepareStatement("SELECT enrollmentno,concat(fname,' ',mname,' ',lname) AS name, emailid,mobile,gender,guardian_name,guardian_contact FROM students;");
-            sql::ResultSet* res = pstmt->executeQuery();
-            cout << left <<
-                setw(15) << "Enrollment No: " <<
-                setw(30) << "Name: " <<
-                setw(25) << "Email ID: " <<
-                setw(12) << "Mobile: " <<
-                setw(5) << "Gender: " <<
-                setw(30) << "Guardian Name: " <<
-                setw(12) << "Guardian Contact: " <<
-                endl;
-            cout << "____________________________________________________________________________________________________________________________________________________"
-                 << endl;
-            while (res->next()) {
-                cout << setw(15) << res->getInt("enrollmentno") 
-					<< setw(30) << res->getString("name") 
-                    << setw(25) << res->getString("emailid")
-					<< setw(12) << res->getInt("mobile")
-					<< setw(5) << res->getString("gender")
-					<< setw(30) << res->getString("guardian_name")
-					<< setw(12) << res->getString("guardian_contact")
-					<< endl;
-                
-			}
-            view_my_class:
-			cout << "1. Refresh" << endl
-				<< "2. Back to Faculty Dashboard" << endl <<
-				"Enter a option: ";
-			cin >> choice;
-			if (choice == 1) {
-                clearscreen();
-				viewMyclass();
-			}
-			else if (choice == 2) {
-				clearscreen();
-                Facultymenu();
-			}
-			else {
-				cout << "Invalid option, please try again." << endl;
-                goto view_my_class;
-			}
+            string year = "FY";
+			viewMyclassQuery(year);
 		}
+        else if (choice == 2) {
+            string year = "SY";
+			viewMyclassQuery(year);
+        }
+        else if (choice == 3) {
+            string year = "TY";
+            viewMyclassQuery(year);
+        }
 	}
+   void  viewMyclassQuery(string year) {
+       sql::Connection* con = getConnection();
+       sql::PreparedStatement* pstmt = con->prepareStatement("SELECT enrollmentno,concat(fname,' ',mname,' ',lname) AS name, emailid,mobile,gender,guardian_name,guardian_contact FROM students WHERE department = ? AND year = ?;");
+       pstmt->setString(1, department);
+       pstmt->setString(2, year);
+       sql::ResultSet* res = pstmt->executeQuery();
+       cout << left <<
+           setw(15) << "Enrollment No: " <<
+           setw(30) << "Name: " <<
+           setw(25) << "Email ID: " <<
+           setw(12) << "Mobile: " <<
+           setw(5) << "Gender: " <<
+           setw(30) << "Guardian Name: " <<
+           setw(12) << "Guardian Contact: " <<
+           endl;
+       cout << "____________________________________________________________________________________________________________________________________________________"
+           << endl;
+       while (res->next()) {
+           cout << setw(15) << res->getInt("enrollmentno")
+               << setw(30) << res->getString("name")
+               << setw(25) << res->getString("emailid")
+               << setw(12) << res->getInt("mobile")
+               << setw(5) << res->getString("gender")
+               << setw(30) << res->getString("guardian_name")
+               << setw(12) << res->getString("guardian_contact")
+               << endl;
+
+       }
+   view_my_class:
+       cout << "1. Refresh" << endl
+           << "2. Back to Faculty Dashboard" << endl <<
+           "Enter a option: ";
+       cin >> choice;
+       if (choice == 1) {
+           clearscreen();
+           viewMyclass();
+       }
+       else if (choice == 2) {
+           clearscreen();
+           Facultymenu();
+       }
+       else {
+           cout << "Invalid option, please try again." << endl;
+           goto view_my_class;
+       }
+
+    }
     
 };
 

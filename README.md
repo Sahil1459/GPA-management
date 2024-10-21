@@ -27,6 +27,22 @@ To set up the GPA Management System on your local machine, follow these steps:
    ```bash
    git clone https://github.com/Sahil1459/GPA-management.git
 
+## Development Environment
+
+The GPA Management System is developed using **Visual Studio**, which provides an integrated development environment (IDE) for C++. Visual Studio offers features such as:
+
+- **IntelliSense**: Provides code suggestions and auto-completion, making coding more efficient.
+- **Debugger**: A powerful debugging tool to identify and fix issues quickly.
+- **Project Management**: Organize and manage project files and settings effectively.
+
+### Setting Up Visual Studio
+1. Download and install **Visual Studio** from the [official website](https://visualstudio.microsoft.com/downloads/).
+2. Choose the **Desktop development with C++** workload during installation.
+3. Once installed, open the GPA Management System project and configure the MySQL Connector/C++ library in your project settings.
+
+Using Visual Studio ensures a smooth development experience with helpful tools and features.
+
+
 ## Contributing
 
 Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
@@ -40,8 +56,8 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 ## Contact
 
 For any inquiries or feedback, please contact:
-- [Sahil Gawade] at [sahilgawa07@gmail.com]
-- Abhishek Lohot at [abhidada123@gmail.com]
+- Sahil Gawade at [sahilgawa07@gmail.com]
+- Abhishek Lohot at [lohotabhishek16@gmail.com]
 ## Credits and Ownership
 
 This GPA Management System project was developed by **Sahil Gawade** and **Abhishek Lohot** as part of the curriculum for the Diploma in Information Technology at Government Polytechnic Awasari. 
@@ -49,5 +65,12 @@ This GPA Management System project was developed by **Sahil Gawade** and **Abhis
 ### Acknowledgments
 - Special thanks to the instructors and peers who provided valuable feedback and support throughout the development process.
 
-This project is Unlicensed.
+## License
+
+This project is  **Unlicense**. You can freely use, modify, and distribute this software without any restrictions. 
+
+### Unlicense
+
+This is a software license that places the software in the public domain, allowing anyone to use it for any purpose without any limitations.
+
 

@@ -401,7 +401,7 @@ public:
 
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
-            string createQuery = "CREATE TABLE faculty_info ("
+            string createQuery = "CREATE TABLE IF NOT EXISTS faculty_info ("
                 "faculty_id INT NOT NULL AUTO_INCREMENT,"
                 "fname VARCHAR(20),"
                 "mname VARCHAR(20),"
@@ -602,13 +602,24 @@ public:
         cout << "Welcome " << fname << "!" << endl << endl << endl;
         cout << "Faculty Dashboard" << endl << endl;
         cout << "1. View my class" << endl <<
-            "2. Etc" << endl <<
-			"3. Logout" << endl << endl;
-            "Enter a option:";
+            "2. View Exams" << endl <<
+            "3. Logout" << endl << endl;
+        "Enter a option:";
         cin >> choice;
 
         if (choice == 1) {
             viewMyclass();
+        }
+        else if (choice == 2) {
+            cout << "Exam Menu " << endl
+                << "1. View Exams " << endl
+                << "2. Add grades" << endl
+                << "3. View Insights" << endl\
+                << "Enter a choice:";
+            cin >> choice;
+            if (choice == 1) {
+                viewExams();
+            }
         }
         else if (choice == 9) {
             clearscreen();
@@ -617,74 +628,74 @@ public:
     }
     bool loginFaculty(string& emailid, string& password) {
         int choice;
-            try {
-                pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM faculty_info WHERE emailid = ?");
-                pstmt->setString(1, emailid);
+        try {
+            pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM faculty_info WHERE emailid = ?");
+            pstmt->setString(1, emailid);
 
-                res = pstmt->executeQuery();
+            res = pstmt->executeQuery();
 
-                if (res->next()) {
-                    string storedPassword = res->getString("password");
-                    department = res->getString("department");
-                    fname = res->getString("fname");
-                    lname = res->getString("lname");
+            if (res->next()) {
+                string storedPassword = res->getString("password");
+                department = res->getString("department");
+                fname = res->getString("fname");
+                lname = res->getString("lname");
 
-                    if (storedPassword == password) {
-                        // If the password is correct, go to the Faculty menu
-                        Facultymenu();
-                        delete res;
-                        delete pstmt;
-                        delete con;
-                        return true; // Login success
-                    }
-                    else {
-                        // If the password is incorrect
-                        cout << "Incorrect password." << endl << endl;
-                    Faculty_exception1_re:
-                        cout <<
-                            "1. Go back to main menu" << endl <<
-                            "Enter an option: ";
-                        cin >> choice;
-
-                        if (choice == 1) {
-                            clearscreen();
-                            mainscreen(); // Go back to main menu
-                        }
-                        else {
-                            cout << "Invalid option, please try again." << endl;
-                            goto Faculty_exception1_re;
-                        }
-                    }
+                if (storedPassword == password) {
+                    // If the password is correct, go to the Faculty menu
+                    Facultymenu();
+                    delete res;
+                    delete pstmt;
+                    delete con;
+                    return true; // Login success
                 }
                 else {
-                Faculty_exception2_re:
-                    // If the email is not found
-                    cout << "Email ID not found.\n";
-                    cout << "1. Go back to main menu" << endl <<
-                        "Enter a option:";
-
+                    // If the password is incorrect
+                    cout << "Incorrect password." << endl << endl;
+                Faculty_exception1_re:
+                    cout <<
+                        "1. Go back to main menu" << endl <<
+                        "Enter an option: ";
                     cin >> choice;
+
                     if (choice == 1) {
                         clearscreen();
-                        mainscreen();
-
+                        mainscreen(); // Go back to main menu
                     }
                     else {
-
                         cout << "Invalid option, please try again." << endl;
-                        goto Faculty_exception2_re;
+                        goto Faculty_exception1_re;
                     }
                 }
-
-                // Clean up resources after each query attempt
-                delete res;
-                delete pstmt;
-
             }
-            catch (sql::SQLException& e) {
-                std::cerr << "Error during login: " << e.what() << std::endl;
+            else {
+            Faculty_exception2_re:
+                // If the email is not found
+                cout << "Email ID not found.\n";
+                cout << "1. Go back to main menu" << endl <<
+                    "Enter a option:";
+
+                cin >> choice;
+                if (choice == 1) {
+                    clearscreen();
+                    mainscreen();
+
+                }
+                else {
+
+                    cout << "Invalid option, please try again." << endl;
+                    goto Faculty_exception2_re;
+                }
             }
-        
+
+            // Clean up resources after each query attempt
+            delete res;
+            delete pstmt;
+
+        }
+        catch (sql::SQLException& e) {
+            std::cerr << "Error during login: " << e.what() << std::endl;
+        }
+
 
         delete con; // Ensure connection is closed when exiting the loop
         return false; // Login failed
@@ -695,9 +706,9 @@ public:
         string guardian_name;
         string guardian_contact;
         int mobile;
-		string gender;
+        string gender;
         string name;
-		string email;
+        string email;
         cout << "1. FY" << endl <<
             "2. SY" << endl <<
             "3. TY" << endl <<
@@ -706,75 +717,78 @@ public:
 
         if (choice == 1) {
             string year = "FY";
-			viewMyclassQuery(year);
-		}
+            viewMyclassQuery(year);
+        }
         else if (choice == 2) {
             string year = "SY";
-			viewMyclassQuery(year);
+            viewMyclassQuery(year);
         }
         else if (choice == 3) {
             string year = "TY";
             viewMyclassQuery(year);
         }
-	}
-   void  viewMyclassQuery(string year) {
-       sql::Connection* con = getConnection();
-       sql::PreparedStatement* pstmt = con->prepareStatement("SELECT enrollmentno,concat(fname,' ',mname,' ',lname) AS name, emailid,mobile,gender,guardian_name,guardian_contact FROM students_info WHERE department = ? AND year = ?;");
-       pstmt->setString(1, department);
-       pstmt->setString(2, year);
-       sql::ResultSet* res = pstmt->executeQuery();
-       cout << left <<
-           setw(15) << "Enrollment No: " <<
-           setw(30) << "Name: " <<
-           setw(25) << "Email ID: " <<
-           setw(12) << "Mobile: " <<
-           setw(5) << "Gender: " <<
-           setw(30) << "Guardian Name: " <<
-           setw(12) << "Guardian Contact: " <<
-           endl;
-       cout << "____________________________________________________________________________________________________________________________________________________"
-           << endl;
-       while (res->next()) {
-           cout << setw(15) << res->getInt("enrollmentno")
-               << setw(30) << res->getString("name")
-               << setw(25) << res->getString("emailid")
-               << setw(12) << res->getInt("mobile")
-               << setw(5) << res->getString("gender")
-               << setw(30) << res->getString("guardian_name")
-               << setw(12) << res->getString("guardian_contact")
-               << endl;
+    }
+    void  viewMyclassQuery(string year) {
+        sql::Connection* con = getConnection();
+        sql::PreparedStatement* pstmt = con->prepareStatement("SELECT enrollmentno,concat(fname,' ',mname,' ',lname) AS name, emailid,mobile,gender,guardian_name,guardian_contact FROM students_info WHERE department = ? AND year = ?;");
+        pstmt->setString(1, department);
+        pstmt->setString(2, year);
+        sql::ResultSet* res = pstmt->executeQuery();
+        cout << left <<
+            setw(15) << "Enrollment No: " <<
+            setw(30) << "Name: " <<
+            setw(25) << "Email ID: " <<
+            setw(12) << "Mobile: " <<
+            setw(5) << "Gender: " <<
+            setw(30) << "Guardian Name: " <<
+            setw(12) << "Guardian Contact: " <<
+            endl;
+        cout << "____________________________________________________________________________________________________________________________________________________"
+            << endl;
+        while (res->next()) {
+            cout << setw(15) << res->getInt("enrollmentno")
+                << setw(30) << res->getString("name")
+                << setw(25) << res->getString("emailid")
+                << setw(12) << res->getInt("mobile")
+                << setw(5) << res->getString("gender")
+                << setw(30) << res->getString("guardian_name")
+                << setw(12) << res->getString("guardian_contact")
+                << endl;
 
-       }
-   view_my_class:
-       cout << "1. Refresh" << endl
-           << "2. Back to Faculty Dashboard" << endl <<
-           "Enter a option: ";
-       cin >> choice;
-       if (choice == 1) {
-           clearscreen();
-           viewMyclass();
-       }
-       else if (choice == 2) {
-           clearscreen();
-           Facultymenu();
-       }
-       else {
-           cout << "Invalid option, please try again." << endl;
-           goto view_my_class;
-       }
+        }
+    view_my_class:
+        cout << "1. Refresh" << endl
+            << "2. Back to Faculty Dashboard" << endl <<
+            "Enter a option: ";
+        cin >> choice;
+        if (choice == 1) {
+            clearscreen();
+            viewMyclass();
+        }
+        else if (choice == 2) {
+            clearscreen();
+            Facultymenu();
+        }
+        else {
+            cout << "Invalid option, please try again." << endl;
+            goto view_my_class;
+        }
 
     }
+
+    void viewExams() {
+        cout << "1. FY " << endl
+            << "2. SY";
+}
     
 };
 
 class hod : public common_variables,public Database{
 private:
-    string fname;
+    string fname,department;
 public:
     string course_code, exam_date, exam_time, exam_duration, course_name,year,dept;
-    int max_marks, passing_marks;
-
-    
+    int max_marks, passing_marks;  
 	void hodmenu() {
         clearscreen();
 		cout << "Welcome " << fname << endl << endl;
@@ -874,6 +888,78 @@ public:
         }
 
 	}
+
+    bool loginhod(string& emailid, string& password) {
+        int choice;
+        try {
+            pstmt = con->prepareStatement("SELECT password, department, fname FROM faculty_info WHERE emailid = ?");
+            pstmt->setString(1, emailid);
+            res = pstmt->executeQuery();
+
+            if (res->next()) {
+                string storedPassword = res->getString("password");
+                department = res->getString("department");
+                fname = res->getString("fname");
+
+                if (storedPassword == password) {
+                    // If the password is correct, go to the Faculty menu
+                    hodmenu();
+                    delete res;
+                    delete pstmt;
+                    delete con;
+                    return true; // Login success
+                }
+                else {
+                    // If the password is incorrect
+                    cout << "Incorrect password." << endl << endl;
+                Faculty_exception1_re:
+                    cout <<
+                        "1. Go back to main menu" << endl <<
+                        "Enter an option: ";
+                    cin >> choice;
+
+                    if (choice == 1) {
+                        clearscreen();
+                        mainscreen(); // Go back to main menu
+                    }
+                    else {
+                        cout << "Invalid option, please try again." << endl;
+                        goto Faculty_exception1_re;
+                    }
+                }
+            }
+            else {
+            Faculty_exception2_re:
+                // If the email is not found
+                cout << "Email ID not found.\n";
+                cout << "1. Go back to main menu" << endl <<
+                    "Enter a option:";
+
+                cin >> choice;
+                if (choice == 1) {
+                    clearscreen();
+                    mainscreen();
+
+                }
+                else {
+
+                    cout << "Invalid option, please try again." << endl;
+                    goto Faculty_exception2_re;
+                }
+            }
+
+            // Clean up resources after each query attempt
+            delete res;
+            delete pstmt;
+        }
+        catch (sql::SQLException& e) {
+            std::cerr << "Error during login: " << e.what() << std::endl;
+        }
+
+
+        delete con; // Ensure connection is closed when exiting the loop
+        return false; // Login failed
+    }
 };
 
 void mainscreen() {
@@ -934,7 +1020,7 @@ mainre:
             if (choice2 == 1) {
                 goto adminreenter;
             }
-            else {
+            else { 
                 mainscreen();
             }
         }
@@ -943,8 +1029,12 @@ mainre:
         exit(0);
     }
     else if (var.choice == 3) {
-		h.hodmenu();
-        mainscreen();
+        string emailid, pass;
+        cout << "Enter your email id : ";
+        cin >> emailid;
+        cout << "Enter password :";
+        cin >> pass;
+        h.loginhod(emailid, password);
     }
     else {
         cout << "Enter a valid choice !" << endl << endl;

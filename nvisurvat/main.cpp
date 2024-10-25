@@ -258,7 +258,7 @@ public:
                 setw(widthBloodGroup) << "Blood G." <<
                 setw(widthNationality) << "Nationality" <<
                 setw(widthCategory) << "Category" <<
-                setw(widthAadharNumber) << "Aadhar No" <<
+                setw(widthAadharNumber) << "Aadhar No " <<
                 endl;
 
             // Display separator line

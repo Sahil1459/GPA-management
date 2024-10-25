@@ -15,9 +15,11 @@
 #include <cppconn/statement.h>              // for mysql command passing parameters
 
 #include <cppconn/prepared_statement.h>     // for prepared statement
-#include <cppconn/resultset.h>              // for retreving the resul set from database    
-#include <cppconn/exception.h>              // for hadnling error coming through database           
-           
+
+#include <cppconn/resultset.h>              // for retreving the resul set from database
+
+#include <cppconn/exception.h>              // for hadnling error coming through database
+
 using namespace std;
 void mainscreen(); // Declaration of mainscreen function
 
@@ -27,14 +29,14 @@ sql::PreparedStatement* pstmt;
 sql::ResultSet* res;
 
 class Database { // Database class for managing connection
-   
-    
-public: 
 
-      
+
+public:
+
+
     sql::Connection* getConnection() {
-    sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
-    sql::Connection* con = driver->connect("tcp://127.0.0.1:3306", "root", "12345");
+        sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
+        sql::Connection* con = driver->connect("tcp://127.0.0.1:3306", "root", "12345");
         con->setSchema("GPA_db");
         return con;
     }
@@ -75,7 +77,7 @@ protected:
     string post;
 
 public:
-	void adminmenu() {                                          //Displays the admin menu
+    void adminmenu() { //Displays the admin menu
         cout << "Welcome to Admin Dashboard" << endl << endl;
     admin_choice_re:
         cout << "1. Register Student" << endl;
@@ -112,12 +114,12 @@ public:
             mainscreen();
         }
         else {
-			cout << "Enter a Valid option !";       //handle a exception if user entered a wrong option
+            cout << "Enter a Valid option !"; //handle a exception if user entered a wrong option
             goto admin_choice_re;
         }
     }
 
-	bool registerStudent() {                        // Function to register a student 
+    bool registerStudent() { // Function to register a student 
         cout << "Enter first name: ";
         cin >> fname;
         cout << "Enter middle name: ";
@@ -173,11 +175,11 @@ public:
             unique_ptr < sql::Statement > stmt(con->createStatement()); //createing statement object for query
 
             // SQL query to create a table 
-            
+
             string insertQuery = "INSERT INTO students_info (enrollmentno, fname, mname, lname, department, year, emailid, mobile, birthdate, address, password, gender, admission_date, guardian_name,guardian_contact, blood_group, nationality, category, aadhar_number) VALUES (" +
                 to_string(enrollmentno) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + year + "','" + emailid + "'," +
                 to_string(mobile) + ",'" + birthdate + "','" + address + "','" + password + "', '" + gender + "', '" + addmission_date + "', '" + guardian_name + "', " + to_string(guardian_mobile) + ", '" + blood_grp + "', '" + nationality + "', '" + category + "', '" + aadhar_number + "')";
-			stmt->execute(insertQuery);     //by using execute function query is sent to Database engine
+            stmt->execute(insertQuery); //by using execute function query is sent to Database engine
 
             cout << endl << "Registration successful!" << endl << endl;
         register_re:
@@ -201,7 +203,7 @@ public:
             clearscreen();
             adminmenu();
         }
-		catch (sql::SQLException& e) {                      //this block prints the error message given by database engine
+        catch (sql::SQLException& e) { //this block prints the error message given by database engine
             cerr << "SQL Error: " << e.what() << endl;
             registerStudent(); // calls registerStudent() again to register the student
         }
@@ -334,8 +336,8 @@ public:
         cin >> enrollmentno;
 
         try {
-            
-            string deleteQuery = "DELETE FROM students WHERE enrollmentno = " + to_string(enrollmentno);
+
+            string deleteQuery = "DELETE FROM students_info WHERE enrollmentno = " + to_string(enrollmentno);
             stmt->execute(deleteQuery);
 
             cout << "Student record deleted successfully!" << endl;
@@ -385,7 +387,7 @@ public:
         cout << "Enter experience years :";
         cin >> experience_years;
         cout << "Enter Post(Faculty/HOD):";
-		cin >> post;
+        cin >> post;
         do { // using do while loop for double confirmation of password
             cout << "Enter password: ";
             cin >> password;
@@ -419,7 +421,7 @@ public:
 
             string insertQuery = "INSERT INTO faculty_info (faculty_id, fname, mname, lname, department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,password,post) VALUES (" +
                 to_string(faculty_id) + ",'" + fname + "','" + mname + "','" + lname + "','" + department + "','" + emailid + "'," +
-                to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "','"+ post +"')";
+                to_string(mobile) + ",'" + birthdate + "','" + address + "', '" + joining_date + "','" + gender + "'," + to_string(experience_years) + ",'" + password + "','" + post + "')";
             stmt->execute(insertQuery);
 
             cout << endl << endl << "Faculty registered successfully!" << endl;
@@ -494,7 +496,7 @@ public:
                 string(widthJoiningDate, '-') <<
                 string(widthGender, '-') <<
                 string(widthExperience, '-') <<
-                string(widthPost,'-') <<
+                string(widthPost, '-') <<
                 endl;
 
             // Fetch and display each row of data without adding extra lines
@@ -573,9 +575,14 @@ public:
 
 };
 
-class teacher : public common_variables {
-private:
-    string emailid,password,department,fname,lname;
+class Faculty : public common_variables, public Database {
+private: string emailid,
+    password,
+    department,
+    fname,
+    lname;
+       admin a;
+
 public:
 
     Faculty() {
@@ -592,11 +599,12 @@ public:
     }
     void Facultymenu() {
         clearscreen();
-        cout << "Welcome " << fname << "!" << endl << endl <<endl;
-        cout << "Teacher Dashboard" << endl << endl;
-        cout << "1. View my class" << endl
-            << "2. Etc" << endl 
-            << "Enter a option:";
+        cout << "Welcome " << fname << "!" << endl << endl << endl;
+        cout << "Faculty Dashboard" << endl << endl;
+        cout << "1. View my class" << endl <<
+            "2. View Exams" << endl <<
+            "3. Logout" << endl << endl;
+        "Enter a option:";
         cin >> choice;
 
         if (choice == 1) {
@@ -632,55 +640,52 @@ public:
                 fname = res->getString("fname");
                 lname = res->getString("lname");
 
-                    if (storedPassword == password) {
-                        // If the password is correct, go to the teacher menu
-                        teachermenu();
-                        delete res;
-                        delete pstmt;
-                        delete con;
-                        return true;  // Login success
-                    }
-                    else {
-                        // If the password is incorrect
-                        cout << "Incorrect password." << endl << endl;
-                        teacher_exception1_re:
-                        cout 
-                            << "1. Go back to main menu" << endl
-                            << "Enter an option: ";
-                        cin >> choice;
-
-                        if (choice == 1) {
-                            clearscreen();
-                            mainscreen();  // Go back to main menu
-                            break;  // Exit the loop if user chooses to go back to the main menu
-                        }
-                        else {
-                            cout << "Invalid option, please try again." << endl;
-                            goto teacher_exception1_re;
-                        }
-                    }
+                if (storedPassword == password) {
+                    // If the password is correct, go to the Faculty menu
+                    Facultymenu();
+                    delete res;
+                    delete pstmt;
+                    delete con;
+                    return true; // Login success
                 }
                 else {
-                    teacher_exception2_re:
-                    // If the email is not found
-                    cout << "Email ID not found.\n";
-                    cout << "1. Go back to main menu" << endl
-                        << "Enter a option:";
+                    // If the password is incorrect
+                    cout << "Incorrect password." << endl << endl;
+                Faculty_exception1_re:
+                    cout <<
+                        "1. Go back to main menu" << endl <<
+                        "Enter an option: ";
+                    cin >> choice;
+
+                    if (choice == 1) {
+                        clearscreen();
+                        mainscreen(); // Go back to main menu
+                    }
+                    else {
+                        cout << "Invalid option, please try again." << endl;
+                        goto Faculty_exception1_re;
+                    }
+                }
+            }
+            else {
+            Faculty_exception2_re:
+                // If the email is not found
+                cout << "Email ID not found.\n";
+                cout << "1. Go back to main menu" << endl <<
+                    "Enter a option:";
 
                 cin >> choice;
                 if (choice == 1) {
                     clearscreen();
                     mainscreen();
 
-                    }
-                    else{
-
-						cout << "Invalid option, please try again." << endl;
-                        goto teacher_exception2_re;
-                    }
-                   
-                    break;  // Exit the loop if the email ID is not found
                 }
+                else {
+
+                    cout << "Invalid option, please try again." << endl;
+                    goto Faculty_exception2_re;
+                }
+            }
 
             // Clean up resources after each query attempt
             delete res;
@@ -771,52 +776,56 @@ public:
 
     }
 
-   
+    void viewExams() {
+        cout << "1. FY " << endl
+            << "2. SY";
+    }
+
 };
 
-class hod : public common_variables,public Database{
+class hod : public common_variables, public Database {
 private:
-    string fname,department;
+    string fname, department;
 public:
-    string course_code, exam_date, exam_time, exam_duration, course_name,year,dept;
-    int max_marks, passing_marks;  
-	void hodmenu() {
+    string course_code, exam_date, exam_time, exam_duration, course_name, year, dept;
+    int max_marks, passing_marks;
+    void hodmenu() {
         clearscreen();
-		cout << "Welcome " << fname << endl << endl;
-		cout << "Head of Department Dashboard" << endl;
+        cout << "Welcome " << fname << endl << endl;
+        cout << "Head of Department Dashboard" << endl;
         cout << "1. View students" << endl <<
             "2. View faculty" << endl <<
             "3. View course details" << endl <<
             "4. Add course" << endl <<
             "5. Delete course" << endl <<
             "6. Add Exam" << endl;
-		cout <<	"7. View exam details" << endl << 
-			"8. Logout" << endl <<
-			"Enter a option:";
-		cin >> choice;
+        cout << "7. View exam details" << endl <<
+            "8. Logout" << endl <<
+            "Enter a option:";
+        cin >> choice;
         if (choice == 1) {
-			//viewStudents();
+            //viewStudents();
         }
-		else if (choice == 2) {
-			//viewFaculty();
+        else if (choice == 2) {
+            //viewFaculty();
         }
-		else if (choice == 3) {
-			//viewCourseDetails();
+        else if (choice == 3) {
+            //viewCourseDetails();
         }
         else if (choice == 4) {
-			//addCourse();
+            //addCourse();
         }
-		else if (choice == 5) {
-			//deleteCourse();
+        else if (choice == 5) {
+            //deleteCourse();
         }
-		else if (choice == 6) {
+        else if (choice == 6) {
             addExam();
 
         }
-		else if (choice == 7) {
+        else if (choice == 7) {
             //viewExam();
         }
-		else if (choice == 8) {
+        else if (choice == 8) {
             clearscreen();
             mainscreen();
         }
@@ -824,61 +833,61 @@ public:
 
     void addExam() {
         clearscreen();
-		cout << "Add Exam" << endl << endl
-			<< "Enter course code: ";
-		cin >> course_code;
-		cout << "Enter subject name: ";
+        cout << "Add Exam" << endl << endl
+            << "Enter course code: ";
+        cin >> course_code;
+        cout << "Enter subject name: ";
         cin.ignore();
         getline(cin, course_name);
         cout << "Enter Year(FY/SY/TY):";
         cin >> year;
-		cout << "Enter exam date(DD/MM/YY): ";
-		cin >> exam_date;
-		cout << "Enter exam time(HH:MM): ";
-		cin >> exam_time;
-		cout << "Enter exam duration(HH:MM): ";
-		cin >> exam_duration;
-		cout << "Enter maximum marks(Total): ";
-		cin >> max_marks;
-		cout << "Enter passing marks(Minimum): ";
-		cin >> passing_marks;
+        cout << "Enter exam date(DD/MM/YY): ";
+        cin >> exam_date;
+        cout << "Enter exam time(HH:MM): ";
+        cin >> exam_time;
+        cout << "Enter exam duration(HH:MM): ";
+        cin >> exam_duration;
+        cout << "Enter maximum marks(Total): ";
+        cin >> max_marks;
+        cout << "Enter passing marks(Minimum): ";
+        cin >> passing_marks;
         try {
-			sql::Connection* con = getConnection();
-			sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks,course_name,dept,year) VALUES (?,?,?,?,?,?,?,?,?)");
-			pstmt->setString(1, course_code);
-			pstmt->setString(2, exam_date);
-			pstmt->setString(3, exam_time);
-			pstmt->setString(4, exam_duration);
-			pstmt->setInt(5, max_marks);
-			pstmt->setInt(6, passing_marks);
-			pstmt->setString(7, course_name);
-			pstmt->setString(8, dept);
-			pstmt->setString(9, year);
+            sql::Connection* con = getConnection();
+            sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks,course_name,dept,year) VALUES (?,?,?,?,?,?,?,?,?)");
+            pstmt->setString(1, course_code);
+            pstmt->setString(2, exam_date);
+            pstmt->setString(3, exam_time);
+            pstmt->setString(4, exam_duration);
+            pstmt->setInt(5, max_marks);
+            pstmt->setInt(6, passing_marks);
+            pstmt->setString(7, course_name);
+            pstmt->setString(8, dept);
+            pstmt->setString(9, year);
             pstmt->execute();
-			cout << "Exam added successfully." << endl;
-			delete pstmt;
-			delete con;
+            cout << "Exam added successfully." << endl;
+            delete pstmt;
+            delete con;
 
-			cout << endl;
-            hod_add_exam:
+            cout << endl;
+        hod_add_exam:
             cout << "1. Back to HOD Dashborad" << endl
                 << "Enter a choice: ";
             cin >> choice;
             if (choice == 1) {
-				clearscreen();
+                clearscreen();
                 hodmenu();
             }
             else {
                 cout << "Invalid choice !! " << endl;
                 goto hod_add_exam;
-					
+
             }
-		}
-        catch(sql::SQLException& e){
+        }
+        catch (sql::SQLException& e) {
             cout << "Error : " << e.what() << endl;
         }
 
-	}
+    }
 
     bool loginhod(string& emailid, string& password) {
         int choice;
@@ -956,7 +965,7 @@ public:
 void mainscreen() {
     admin a;
     Faculty t;
-	hod h;
+    hod h;
     common_variables
         var;
     string username, password;
@@ -982,7 +991,7 @@ mainre:
         cin >> emailid;
         cout << "Enter password :";
         cin >> pass;
-        t.loginTeacher(emailid,pass);
+        t.loginFaculty(emailid, pass);
     }
     else if (var.choice == 4) {
     adminreenter: cout << "   Admin login   " << endl << endl;
@@ -1011,7 +1020,7 @@ mainre:
             if (choice2 == 1) {
                 goto adminreenter;
             }
-            else { 
+            else {
                 mainscreen();
             }
         }

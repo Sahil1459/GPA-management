@@ -548,7 +548,7 @@ public:
 
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
-            string deleteQuery = "DELETE FROM faculty WHERE faculty_id = " + to_string(faculty_id);
+            string deleteQuery = "DELETE FROM faculty_info WHERE faculty_id = " + to_string(faculty_id);
             stmt->execute(deleteQuery);
 
             cout << "Faculty record deleted successfully!" << endl;
@@ -804,7 +804,7 @@ public:
             "Enter a option:";
         cin >> choice;
         if (choice == 1) {
-            //viewStudents();
+            viewStudents();
         }
         else if (choice == 2) {
             //viewFaculty();
@@ -960,6 +960,102 @@ public:
         delete con; // Ensure connection is closed when exiting the loop
         return false; // Login failed
     }
+
+    void viewStudents() {
+		cout << "View my students" << endl;
+        try {
+            pstmt = con->prepareStatement("SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
+                "department, year, emailid, mobile, birthdate, address, gender, admission_date, "
+                "guardian_name, guardian_contact, blood_group, nationality, category, aadhar_number "
+                "FROM students_info WHERE department = ?");
+            pstmt->setString(1, department);
+			pstmt->execute();
+
+            const int widthEnrollment = 15; // enrollmentno (bigint)
+            const int widthName = 25; // Name (concatenation of fname, mname, lname)
+            const int widthDepartment = 6; // department (varchar(2)) reduced space between dept & name
+            const int widthYear = 6; // year (varchar(2)) reduced gap between dept & year
+            const int widthEmail = 27; // emailid (varchar(50)) reduced gap between email & mobile
+            const int widthMobile = 12; // mobile (bigint)
+            const int widthBirthdate = 12; // birthdate (varchar(10))
+            const int widthAddress = 30; // address (varchar(100)), nearby 20 characters as you requested
+            const int widthGender = 8; // gender (varchar(10))
+            const int widthAdmissionDate = 18; // admission_date (date)
+            const int widthGuardianName = 20; // guardian_name (varchar(50))
+            const int widthGuardianContact = 19; // guardian_contact (bigint)
+            const int widthBloodGroup = 10; // blood_group (varchar(3))
+            const int widthNationality = 13; // nationality (varchar(30))
+            const int widthCategory = 10; // category (varchar(20))
+            const int widthAadharNumber = 15; // aadhar_number (bigint)
+
+            // Display header
+            cout << left <<
+                setw(widthEnrollment) << "Enrollment No" <<
+                setw(widthName) << "Name" <<
+                setw(widthDepartment) << "Dept" <<
+                setw(widthYear) << "Year" <<
+                setw(widthEmail) << "Email ID" <<
+                setw(widthMobile) << "Mobile" <<
+                setw(widthBirthdate) << "Birthdate" <<
+                setw(widthAddress) << "Address" <<
+                setw(widthGender) << "Gender" <<
+                setw(widthAdmissionDate) << "Admission Date" <<
+                setw(widthGuardianName) << "Guardian Name" <<
+                setw(widthGuardianContact) << "Guardian Contact" <<
+                setw(widthBloodGroup) << "Blood G." <<
+                setw(widthNationality) << "Nationality" <<
+                setw(widthCategory) << "Category" <<
+                setw(widthAadharNumber) << "Aadhar No " <<
+                endl;
+
+            // Display separator line
+            cout << string(widthEnrollment, '-') <<
+                string(widthName, '-') <<
+                string(widthDepartment, '-') <<
+                string(widthYear, '-') <<
+                string(widthEmail, '-') <<
+                string(widthMobile, '-') <<
+                string(widthBirthdate, '-') <<
+                string(widthAddress, '-') <<
+                string(widthGender, '-') <<
+                string(widthAdmissionDate, '-') <<
+                string(widthGuardianName, '-') <<
+                string(widthGuardianContact, '-') <<
+                string(widthBloodGroup, '-') <<
+                string(widthNationality, '-') <<
+                string(widthCategory, '-') <<
+                string(widthAadharNumber, '-') <<
+                endl;
+
+            // Fetch and display each row of data
+            while (res->next()) {
+                cout << left <<
+                    setw(widthEnrollment) << res->getString("enrollmentno") <<
+                    setw(widthName) << res->getString("Name") <<
+                    setw(widthDepartment) << res->getString("department") <<
+                    setw(widthYear) << res->getString("year") <<
+                    setw(widthEmail) << res->getString("emailid") <<
+                    setw(widthMobile) << res->getString("mobile") <<
+                    setw(widthBirthdate) << res->getString("birthdate") <<
+                    setw(widthAddress) << res->getString("address") <<
+                    setw(widthGender) << res->getString("gender") <<
+                    setw(widthAdmissionDate) << res->getString("admission_date") <<
+                    setw(widthGuardianName) << res->getString("guardian_name") <<
+                    setw(widthGuardianContact) << res->getString("guardian_contact") <<
+                    setw(widthBloodGroup) << res->getString("blood_group") <<
+                    setw(widthNationality) << res->getString("nationality") <<
+                    setw(widthCategory) << res->getString("category") <<
+                    setw(widthAadharNumber) << res->getString("aadhar_number") <<
+                    endl;
+            }
+
+            
+
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error : " << e.what() << endl;
+        }
+    }
 };
 
 void mainscreen() {
@@ -1034,7 +1130,7 @@ mainre:
         cin >> emailid;
         cout << "Enter password :";
         cin >> pass;
-        h.loginhod(emailid, password);
+        h.loginhod(emailid, pass);
     }
     else {
         cout << "Enter a valid choice !" << endl << endl;

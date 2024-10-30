@@ -807,7 +807,7 @@ public:
             viewStudents();
         }
         else if (choice == 2) {
-            //viewFaculty();
+            viewFaculty();
         }
         else if (choice == 3) {
             //viewCourseDetails();
@@ -967,9 +967,9 @@ public:
             pstmt = con->prepareStatement("SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, year, emailid, mobile, birthdate, address, gender, admission_date, "
                 "guardian_name, guardian_contact, blood_group, nationality, category, aadhar_number "
-                "FROM students_info WHERE department = ?");
-            pstmt->setString(1, department);
-			pstmt->execute();
+                "FROM students_info WHERE department = 'IF'");
+            //pstmt->setString(1, department);
+            res = pstmt->executeQuery();
 
             const int widthEnrollment = 15; // enrollmentno (bigint)
             const int widthName = 25; // Name (concatenation of fname, mname, lname)
@@ -1048,6 +1048,24 @@ public:
                     setw(widthAadharNumber) << res->getString("aadhar_number") <<
                     endl;
             }
+            cout << endl << endl;
+            cout << "1. Back to HOD dashboard" << endl;
+            cout << "2. Refresh" << endl;
+            cout << "Enter an option:" << endl;
+            cin >> choice;
+            cout << endl << endl;
+            clearscreen();
+
+            if (choice == 1) {
+                hodmenu();
+            }
+            else if (choice == 2) {
+                viewFaculty();
+            }
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                viewFaculty();
+            }
 
             
 
@@ -1055,6 +1073,101 @@ public:
         catch (sql::SQLException& e) {
             cout << "Error : " << e.what() << endl;
         }
+    }
+
+    void viewFaculty() {
+        cout << "Faculty List" << endl;
+        try {
+            unique_ptr < sql::Statement > stmt(con->createStatement());
+            string query = "SELECT faculty_id, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
+                "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,post "
+                "FROM faculty_info WHERE post = 'Faculty'";
+
+            // Executing the query
+            unique_ptr < sql::ResultSet > res(stmt->executeQuery(query));
+
+            // Define column widths
+            const int widthFacultyID = 12; // Facultyid (int)
+            const int widthName = 25; // Name (concatenation of fname, mname, lname)
+            const int widthDepartment = 7; // department (varchar(2))
+            const int widthEmail = 25; // emailid (varchar(50))
+            const int widthMobile = 15; // mobile (bigint)
+            const int widthBirthdate = 15; // birthdate (varchar(10))
+            const int widthAddress = 40; // address (varchar(200))
+            const int widthJoiningDate = 12; // joining_date (date)
+            const int widthGender = 10; // gender (varchar(10))
+            const int widthExperience = 20; // experience_years (int)
+            const int widthPost = 10;
+
+            // Display header without adding extra lines
+            cout << left <<
+                setw(widthFacultyID) << "Faculty ID" <<
+                setw(widthName) << "Name" <<
+                setw(widthDepartment) << "Dept" <<
+                setw(widthEmail) << "Email ID" <<
+                setw(widthMobile) << "Mobile" <<
+                setw(widthBirthdate) << "Birthdate" <<
+                setw(widthJoiningDate) << "Joining Date" <<
+                setw(widthGender) << "Gender" <<
+                setw(widthExperience) << "Experience (Years)" <<
+                setw(widthPost) << "Post" <<
+                endl;
+
+            // Display separator line
+            cout << string(widthFacultyID, '-') <<
+                string(widthName, '-') <<
+                string(widthDepartment, '-') <<
+                string(widthEmail, '-') <<
+                string(widthMobile, '-') <<
+                string(widthBirthdate, '-') <<
+                string(widthJoiningDate, '-') <<
+                string(widthGender, '-') <<
+                string(widthExperience, '-') <<
+                string(widthPost, '-') <<
+                endl;
+
+            // Fetch and display each row of data without adding extra lines
+            while (res->next()) {
+                cout << left <<
+                    setw(widthFacultyID) << res->getInt("faculty_id") <<
+                    setw(widthName) << res->getString("Name") <<
+                    setw(widthDepartment) << res->getString("department") <<
+                    setw(widthEmail) << res->getString("emailid") <<
+                    setw(widthMobile) << res->getInt("mobile") <<
+                    setw(widthBirthdate) << res->getString("birthdate") <<
+                    setw(widthJoiningDate) << res->getString("joining_date") <<
+                    setw(widthGender) << res->getString("gender") <<
+                    setw(widthExperience) << res->getInt("experience_years") <<
+                    setw(widthPost) << res->getString("post") <<
+                    endl;
+            }
+
+            // Prompt for next action
+            int choice;
+            cout << endl << "1. Back to HOD dashboard" << endl;
+            cout << "2. Refresh" << endl;
+            cout << "Enter your option: ";
+            cin >> choice;
+            cout << endl;
+
+            clearscreen(); // Assuming clearscreen() is defined elsewhere
+            if (choice == 1) {
+                hodmenu(); // Assuming adminmenu() is defined elsewhere
+            }
+            else if (choice == 2) {
+                viewFaculty(); // Refresh the list
+            }
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                viewFaculty(); // Retry showing the list
+            }
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQLException: " << e.what() << endl;
+            cerr << "MySQL error code: " << e.getErrorCode() << endl;
+            cerr << "SQLState: " << e.getSQLState() << endl;
+        }
+
     }
 };
 

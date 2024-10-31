@@ -785,7 +785,7 @@ public:
 
 class hod : public common_variables, public Database {
 private:
-    string fname, department = "IF", course;
+    string fname, department, course;
 public:
     string  exam_date, exam_time, exam_duration, course_name, year, dept;
     int max_marks, passing_marks, semester, course_code, faculty;
@@ -804,25 +804,32 @@ public:
             "Enter a option:";
         cin >> choice;
         if (choice == 1) {
+            clearscreen();
             viewStudents();
         }
         else if (choice == 2) {
+			clearscreen();
             viewFaculty();
         }
         else if (choice == 4) {
+			clearscreen();
             viewCourses();
         }
         else if (choice == 3) {
+			clearscreen();
             addCourse();
         }
         else if (choice == 5) {
+			clearscreen();
             //deleteCourse();
         }
         else if (choice == 6) {
+			clearscreen();
             addExam();
 
         }
         else if (choice == 7) {
+			clearscreen();
             viewExam();
         }
         else if (choice == 8) {
@@ -842,16 +849,19 @@ public:
             pstmt->setString(1, department);
             sql::ResultSet* res = pstmt->executeQuery();
             while (res->next()) {
-                cout << left << setw(14) << res->getInt("course_code") << setw(14) << res->getString("course_name") << setw(7) << res->getInt("year") << setw(12) << res->getInt("semester") << setw(30) << res->getString("faculty_name")  << endl;
+                cout << left << setw(14) << res->getInt("course_code") << setw(14) << res->getString("course_name") << setw(7) << res->getInt("year") << setw(12) << res->getInt("semester") << setw(30) << res->getString("faculty_name") << endl;
             }
             delete con;
         }
         catch (sql::SQLException& e) {
             cout << "Error: " << e.what() << endl;
         }
-
+        string exam_type;
         cout << "Enter course code: ";
         cin >> course_code;
+        cin.ignore();
+        cout << "Enter Exam Type (Unit Test,Class Test,Final test) :";
+        getline(cin, exam_type);
         cout << "Enter Year(FY/SY/TY):";
         cin >> year;
         cout << "Enter exam date(DD/MM/YY): ";
@@ -866,13 +876,14 @@ public:
         cin >> passing_marks;
         try {
             sql::Connection* con = getConnection();
-            sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks) VALUES (?,?,?,?,?,?)");
+            sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks,exam_type) VALUES (?,?,?,?,?,?,?)");
             pstmt->setInt(1, course_code);
             pstmt->setString(2, exam_date);
             pstmt->setString(3, exam_time);
             pstmt->setString(4, exam_duration);
             pstmt->setInt(5, max_marks);
             pstmt->setInt(6, passing_marks);
+            pstmt->setString(7, exam_type);
             pstmt->execute();
             cout << "Exam added successfully." << endl;
             delete pstmt;
@@ -972,7 +983,7 @@ public:
     }
 
     void viewStudents() {
-        cout << "View my students" << endl;
+        cout << department << " " << "Department Students" << endl << endl << endl;
         try {
             pstmt = con->prepareStatement("SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, year, emailid, mobile, birthdate, address, gender, admission_date, "
@@ -1086,7 +1097,7 @@ public:
     }
 
     void viewFaculty() {
-        cout << "Faculty List" << endl;
+        cout << department << " " << "Department Faculties" << endl << endl << endl;
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
             string query = "SELECT faculty_id, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
@@ -1254,20 +1265,20 @@ public:
             while (res->next()) {
                 cout << left << setw(13) << res->getInt("course_code") << setw(40) << res->getString("course_name") << setw(13) << res->getString("department") << setw(11) << res->getInt("semester") << setw(7) << res->getString("year") << setw(30) << res->getString("faculty_name") << endl;
             }
-            hod_view_course_re:
-			cout << "1. Back to HOD Dashboard" << endl;
+        hod_view_course_re:
+            cout << "1. Back to HOD Dashboard" << endl;
             cout << "2.Refresh " << endl;
             cout << "Enter a option : ";
-			cin >> choice;
+            cin >> choice;
             if (choice == 1) {
-				clearscreen();
+                clearscreen();
             }
             else if (choice == 2) {
-				clearscreen();
+                clearscreen();
                 viewCourses();
             }
             else {
-				cout << "Invalid choice" << endl;
+                cout << "Invalid choice" << endl;
                 goto hod_view_course_re;
             }
         }
@@ -1278,13 +1289,13 @@ public:
 
     void viewExam() {
         cout << "Previously conducted exams" << endl << endl;
-        cout << setw(10) << "Exam ID" << setw(15) << "Course Code" << setw(40) << "Course Name" << setw(11) << "Semester" << setw(10) << "Year" << setw(30) << "Faculty Name" << endl;
-        cout << "--------------------------------------------------------------------------------------------------------------------------------" << endl;
+        cout << left << setw(10) << "Exam ID" << setw(15) << "Course Code" << setw(40) << "Course Name" << setw(13) << "Exam Type" << setw(12) << "Exam Date" << setw(15) << "Exam Duration" << setw(12) << "Exam Time" << setw(12) << "Max Marks" << setw(12) << "Pass Marks" << endl;
+        cout << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         try {
-            pstmt = con->prepareStatement("SELECT e.exam_id,c.course_code,c.course_name,c.semester,c.year,concat(f.fname, ' ' , f.mname , ' ' , f.lname) as faculty_name FROM exams AS e JOIN  courses AS c ON e.course_code = c.course_code JOIN  faculty_info AS f ON c.faculty_id = f.faculty_id;");
+            pstmt = con->prepareStatement("SELECT e.exam_id,e.course_code,c.course_name,e.exam_type,e.exam_date,e.exam_duration,e.exam_time,e.max_marks,e.passing_marks FROM exams AS e JOIN courses AS c ON e.course_code = c.course_code");
             res = pstmt->executeQuery();
             while (res->next()) {
-                cout << setw(10) << res->getInt("exam_id") << setw(15) << res->getInt("course_code") << setw(40) << res->getString("course_name") << setw(11) << res->getInt("semester") << setw(10) << res->getString("year") << setw(30) << res->getString("faculty_name") << endl;
+                cout << left << setw(10) << res->getInt("exam_id") << setw(15) << res->getInt("course_code") << setw(40) << res->getString("course_name") << setw(15) << res->getString("exam_type") << setw(12) << res->getString("exam_date") << setw(15) << res->getString("exam_duration") << setw(12) << res->getString("exam_time") << setw(12) << res->getInt("max_marks") << setw(12) << res->getInt("passing_marks") << endl;
             }
         hod_view_exam_re:
             cout << "1. Back to HOD dashboard" << endl;
@@ -1316,8 +1327,7 @@ void mainscreen() {
     hod h;
     common_variables
         var;
-    string username, password;
-    h.hodmenu();
+    string username, password; 
 mainre:
     cout << "Welcome to Government Polytechnic Awasari" << endl << endl <<
         "1. Student login" << endl <<

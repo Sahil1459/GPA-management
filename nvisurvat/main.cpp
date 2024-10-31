@@ -32,8 +32,6 @@ class Database { // Database class for managing connection
 
 
 public:
-
-
     sql::Connection* getConnection() {
         sql::mysql::MySQL_Driver* driver = sql::mysql::get_mysql_driver_instance();
         sql::Connection* con = driver->connect("tcp://127.0.0.1:3306", "root", "12345");
@@ -48,7 +46,7 @@ public:
 class common_variables { //Class used for variables which are used through out the program
 public: int choice;
 };
-void clearscreen() { // function from clearinng screen by using sysytem("cls") frm <cstlib> file
+void clearscreen() { // function for clearinng screen by using sysytem("cls") from <cstlib> file
     system("cls");
 }
 
@@ -223,7 +221,7 @@ public:
             // Executing the query
             unique_ptr < sql::ResultSet > res(stmt->executeQuery(query));
 
-            // Column width settings based on your requirements
+            // Column width for each column (Usinf constant in CPP)
             const int widthEnrollment = 15; // enrollmentno (bigint)
             const int widthName = 25; // Name (concatenation of fname, mname, lname)
             const int widthDepartment = 6; // department (varchar(2)) reduced space between dept & name
@@ -241,8 +239,7 @@ public:
             const int widthCategory = 10; // category (varchar(20))
             const int widthAadharNumber = 15; // aadhar_number (bigint)
 
-            // Display header
-            cout << left <<
+            cout << left <<                                 // Displaing header of the table
                 setw(widthEnrollment) << "Enrollment No" <<
                 setw(widthName) << "Name" <<
                 setw(widthDepartment) << "Dept" <<
@@ -280,7 +277,7 @@ public:
                 string(widthAadharNumber, '-') <<
                 endl;
 
-            // Fetch and display each row of data
+            // Fetch and display each row from Database
             while (res->next()) {
                 cout << left <<
                     setw(widthEnrollment) << res->getString("enrollmentno") <<
@@ -330,7 +327,7 @@ public:
         }
     }
 
-    void deleteStudent() {
+    void deleteStudent() {                      // Function to delete a student record
         unique_ptr < sql::Statement > stmt(con->createStatement());
         cout << "Enter enrollment number of the student to delete: ";
         cin >> enrollmentno;
@@ -362,7 +359,7 @@ public:
 
     }
 
-    void registerFaculty() {
+    void registerFaculty() {            // Function to register a new faculty
         cout << "Enter first name: ";
         cin >> fname;
         cout << "Enter middle name: ";
@@ -449,17 +446,13 @@ public:
 
     }
 
-    void showFacultyList() {
+    void showFacultyList() {                            // Function to display the list of all faculty
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
             string query = "SELECT faculty_id, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,post "
                 "FROM faculty_info";
-
-            // Executing the query
             unique_ptr < sql::ResultSet > res(stmt->executeQuery(query));
-
-            // Define column widths
             const int widthFacultyID = 12; // Facultyid (int)
             const int widthName = 25; // Name (concatenation of fname, mname, lname)
             const int widthDepartment = 7; // department (varchar(2))
@@ -472,7 +465,6 @@ public:
             const int widthExperience = 20; // experience_years (int)
             const int widthPost = 10;
 
-            // Display header without adding extra lines
             cout << left <<
                 setw(widthFacultyID) << "Faculty ID" <<
                 setw(widthName) << "Name" <<
@@ -486,7 +478,6 @@ public:
                 setw(widthPost) << "Post" <<
                 endl;
 
-            // Display separator line
             cout << string(widthFacultyID, '-') <<
                 string(widthName, '-') <<
                 string(widthDepartment, '-') <<
@@ -499,7 +490,6 @@ public:
                 string(widthPost, '-') <<
                 endl;
 
-            // Fetch and display each row of data without adding extra lines
             while (res->next()) {
                 cout << left <<
                     setw(widthFacultyID) << res->getInt("faculty_id") <<
@@ -514,8 +504,6 @@ public:
                     setw(widthPost) << res->getString("post") <<
                     endl;
             }
-
-            // Prompt for next action
             int choice;
             cout << endl << "1. Back to admin menu" << endl;
             cout << "2. Refresh" << endl;
@@ -523,16 +511,16 @@ public:
             cin >> choice;
             cout << endl;
 
-            clearscreen(); // Assuming clearscreen() is defined elsewhere
+            clearscreen();
             if (choice == 1) {
-                adminmenu(); // Assuming adminmenu() is defined elsewhere
+                adminmenu();
             }
             else if (choice == 2) {
-                showFacultyList(); // Refresh the list
+                showFacultyList();
             }
             else {
                 cout << "Invalid choice. Please try again." << endl;
-                showFacultyList(); // Retry showing the list
+                showFacultyList();
             }
         }
         catch (sql::SQLException& e) {
@@ -589,15 +577,15 @@ public:
         try {
             // Initialize the MySQL driver and connection
             driver = sql::mysql::get_mysql_driver_instance();
-            con = driver->connect("tcp://127.0.0.1:3306", "root", "12345"); // Change the username and password as needed
-            con->setSchema("GPA_db"); // Replace 'student_db' with your database name
+            con = driver->connect("tcp://127.0.0.1:3306", "root", "12345");
+            con->setSchema("GPA_db");
         }
         catch (sql::SQLException& e) {
             cerr << "SQL Error: " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
     }
-    void Facultymenu() {
+    void Facultymenu() {  // Function to display the faculty menu
         clearscreen();
         cout << "Welcome " << fname << "!" << endl << endl << endl;
         cout << "Faculty Dashboard" << endl << endl;
@@ -626,7 +614,7 @@ public:
             mainscreen();
         }
     }
-    bool loginFaculty(string& emailid, string& password) {
+    bool loginFaculty(string& emailid, string& password) {          // Function to handle faculty login
         int choice;
         try {
             pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM faculty_info WHERE emailid = ?");
@@ -641,7 +629,6 @@ public:
                 lname = res->getString("lname");
 
                 if (storedPassword == password) {
-                    // If the password is correct, go to the Faculty menu
                     Facultymenu();
                     delete res;
                     delete pstmt;
@@ -669,7 +656,6 @@ public:
             }
             else {
             Faculty_exception2_re:
-                // If the email is not found
                 cout << "Email ID not found.\n";
                 cout << "1. Go back to main menu" << endl <<
                     "Enter a option:";
@@ -687,7 +673,6 @@ public:
                 }
             }
 
-            // Clean up resources after each query attempt
             delete res;
             delete pstmt;
 
@@ -697,11 +682,11 @@ public:
         }
 
 
-        delete con; // Ensure connection is closed when exiting the loop
-        return false; // Login failed
+        delete con;
+        return false;
     }
 
-    void viewMyclass() {
+    void viewMyclass() {                    // Function to view the classes of the faculty
         long long int enrollmentno;
         string guardian_name;
         string guardian_contact;
@@ -728,7 +713,7 @@ public:
             viewMyclassQuery(year);
         }
     }
-    void  viewMyclassQuery(string year) {
+    void  viewMyclassQuery(string year) {  // called from viewMyclass(), written seprately to avoid code duplication
         sql::Connection* con = getConnection();
         sql::PreparedStatement* pstmt = con->prepareStatement("SELECT enrollmentno,concat(fname,' ',mname,' ',lname) AS name, emailid,mobile,gender,guardian_name,guardian_contact FROM students_info WHERE department = ? AND year = ?;");
         pstmt->setString(1, department);
@@ -783,13 +768,13 @@ public:
 
 };
 
-class hod : public common_variables, public Database {
+class hod : public common_variables, public Database {   // class for hod
 private:
     string fname, department, course;
 public:
     string  exam_date, exam_time, exam_duration, course_name, year, dept;
     int max_marks, passing_marks, semester, course_code, faculty;
-    void hodmenu() {
+    void hodmenu() {                // function for hod menu
         clearscreen();
         cout << "Welcome " << fname << endl << endl;
         cout << "Head of Department Dashboard" << endl;
@@ -808,28 +793,28 @@ public:
             viewStudents();
         }
         else if (choice == 2) {
-			clearscreen();
+            clearscreen();
             viewFaculty();
         }
         else if (choice == 4) {
-			clearscreen();
+            clearscreen();
             viewCourses();
         }
         else if (choice == 3) {
-			clearscreen();
+            clearscreen();
             addCourse();
         }
         else if (choice == 5) {
-			clearscreen();
+            clearscreen();
             //deleteCourse();
         }
         else if (choice == 6) {
-			clearscreen();
+            clearscreen();
             addExam();
 
         }
         else if (choice == 7) {
-			clearscreen();
+            clearscreen();
             viewExam();
         }
         else if (choice == 8) {
@@ -838,7 +823,7 @@ public:
         }
     }
 
-    void addExam() {
+    void addExam() {                        // function for adding exam
         clearscreen();
         cout << "Add Exam" << endl << endl;
         try {
@@ -910,7 +895,7 @@ public:
 
     }
 
-    bool loginhod(string& emailid, string& password) {
+    bool loginhod(string& emailid, string& password) {              // function for login
         int choice;
         try {
             pstmt = con->prepareStatement("SELECT password, department, fname FROM faculty_info WHERE emailid = ?");
@@ -923,15 +908,13 @@ public:
                 fname = res->getString("fname");
 
                 if (storedPassword == password) {
-                    // If the password is correct, go to the Faculty menu
                     hodmenu();
                     delete res;
                     delete pstmt;
                     delete con;
-                    return true; // Login success
+                    return true;
                 }
                 else {
-                    // If the password is incorrect
                     cout << "Incorrect password." << endl << endl;
                 Faculty_exception1_re:
                     cout <<
@@ -968,8 +951,6 @@ public:
                     goto Faculty_exception2_re;
                 }
             }
-
-            // Clean up resources after each query attempt
             delete res;
             delete pstmt;
         }
@@ -978,11 +959,11 @@ public:
         }
 
 
-        delete con; // Ensure connection is closed when exiting the loop
-        return false; // Login failed
+        delete con;
+        return false;
     }
 
-    void viewStudents() {
+    void viewStudents() {       //  function to view students
         cout << department << " " << "Department Students" << endl << endl << endl;
         try {
             pstmt = con->prepareStatement("SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
@@ -1009,7 +990,6 @@ public:
             const int widthCategory = 10; // category (varchar(20))
             const int widthAadharNumber = 15; // aadhar_number (bigint)
 
-            // Display header
             cout << left <<
                 setw(widthEnrollment) << "Enrollment No" <<
                 setw(widthName) << "Name" <<
@@ -1029,7 +1009,6 @@ public:
                 setw(widthAadharNumber) << "Aadhar No " <<
                 endl;
 
-            // Display separator line
             cout << string(widthEnrollment, '-') <<
                 string(widthName, '-') <<
                 string(widthDepartment, '-') <<
@@ -1048,7 +1027,6 @@ public:
                 string(widthAadharNumber, '-') <<
                 endl;
 
-            // Fetch and display each row of data
             while (res->next()) {
                 cout << left <<
                     setw(widthEnrollment) << res->getString("enrollmentno") <<
@@ -1096,18 +1074,15 @@ public:
         }
     }
 
-    void viewFaculty() {
+    void viewFaculty() {        // Function to view all faculties
         cout << department << " " << "Department Faculties" << endl << endl << endl;
         try {
             unique_ptr < sql::Statement > stmt(con->createStatement());
             string query = "SELECT faculty_id, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, emailid, mobile, birthdate, address, joining_date, gender, experience_years,post "
                 "FROM faculty_info WHERE post = 'Faculty'";
-
-            // Executing the query
             unique_ptr < sql::ResultSet > res(stmt->executeQuery(query));
 
-            // Define column widths
             const int widthFacultyID = 12; // Facultyid (int)
             const int widthName = 25; // Name (concatenation of fname, mname, lname)
             const int widthDepartment = 7; // department (varchar(2))
@@ -1120,7 +1095,6 @@ public:
             const int widthExperience = 20; // experience_years (int)
             const int widthPost = 10;
 
-            // Display header without adding extra lines
             cout << left <<
                 setw(widthFacultyID) << "Faculty ID" <<
                 setw(widthName) << "Name" <<
@@ -1134,7 +1108,6 @@ public:
                 setw(widthPost) << "Post" <<
                 endl;
 
-            // Display separator line
             cout << string(widthFacultyID, '-') <<
                 string(widthName, '-') <<
                 string(widthDepartment, '-') <<
@@ -1147,7 +1120,6 @@ public:
                 string(widthPost, '-') <<
                 endl;
 
-            // Fetch and display each row of data without adding extra lines
             while (res->next()) {
                 cout << left <<
                     setw(widthFacultyID) << res->getInt("faculty_id") <<
@@ -1163,7 +1135,6 @@ public:
                     endl;
             }
 
-            // Prompt for next action
             int choice;
             cout << endl << "1. Back to HOD dashboard" << endl;
             cout << "2. Refresh" << endl;
@@ -1171,16 +1142,16 @@ public:
             cin >> choice;
             cout << endl;
 
-            clearscreen(); // Assuming clearscreen() is defined elsewhere
+            clearscreen();
             if (choice == 1) {
-                hodmenu(); // Assuming adminmenu() is defined elsewhere
+                hodmenu();
             }
             else if (choice == 2) {
-                viewFaculty(); // Refresh the list
+                viewFaculty();
             }
             else {
                 cout << "Invalid choice. Please try again." << endl;
-                viewFaculty(); // Retry showing the list
+                viewFaculty();
             }
         }
         catch (sql::SQLException& e) {
@@ -1191,7 +1162,7 @@ public:
 
     }
 
-    void addCourse() {
+    void addCourse() {      // Add course
         clearscreen();
         cout << "Enter Course Details Below " << endl << endl << endl
             << "Enter Course code : ";
@@ -1255,7 +1226,7 @@ public:
 
     }
 
-    void viewCourses() {
+    void viewCourses() {            // view courses
         clearscreen();
         cout << left << setw(13) << "Course Code" << setw(40) << "Course Name" << setw(13) << "Department" << setw(11) << "Semester" << setw(7) << "Year" << setw(30) << "Faculty Name" << endl;
         cout << "--------------------------------------------------------------------------------------------------------------------------------" << endl;
@@ -1287,7 +1258,7 @@ public:
         }
     }
 
-    void viewExam() {
+    void viewExam() {               // view exam details
         cout << "Previously conducted exams" << endl << endl;
         cout << left << setw(10) << "Exam ID" << setw(15) << "Course Code" << setw(40) << "Course Name" << setw(13) << "Exam Type" << setw(12) << "Exam Date" << setw(15) << "Exam Duration" << setw(12) << "Exam Time" << setw(12) << "Max Marks" << setw(12) << "Pass Marks" << endl;
         cout << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
@@ -1321,13 +1292,13 @@ public:
 
 };
 
-void mainscreen() {
+void mainscreen() {  // Starting of the program
     admin a;
     Faculty t;
     hod h;
     common_variables
         var;
-    string username, password; 
+    string username, password;
 mainre:
     cout << "Welcome to Government Polytechnic Awasari" << endl << endl <<
         "1. Student login" << endl <<
@@ -1335,7 +1306,7 @@ mainre:
         "3. HOD login" << endl <<
         "4. Admin login" << endl <<
         "5. Exit" << endl <<
-        "Enter your choice: ";
+        "Enter your choice: ";              //choose one from  given roles
     cin >>
         var.choice;
     cout << endl;
@@ -1401,7 +1372,7 @@ mainre:
     }
 }
 
-int main() {
-    mainscreen();
+int main() {            // seprated mainscreen function beacuse we can't main function outside main function
+    mainscreen();       // Displays all User Logins
     return 0;
 }

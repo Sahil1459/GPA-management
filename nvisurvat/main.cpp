@@ -785,7 +785,7 @@ public:
 
 class hod : public common_variables, public Database {
 private:
-    string fname, department, course;
+    string fname, department = "IF", course;
 public:
     string  exam_date, exam_time, exam_duration, course_name, year, dept;
     int max_marks, passing_marks, semester, course_code, faculty;
@@ -823,7 +823,7 @@ public:
 
         }
         else if (choice == 7) {
-            //viewExam();
+            viewExam();
         }
         else if (choice == 8) {
             clearscreen();
@@ -833,12 +833,25 @@ public:
 
     void addExam() {
         clearscreen();
-        cout << "Add Exam" << endl << endl
-            << "Enter course code: ";
+        cout << "Add Exam" << endl << endl;
+        try {
+            cout << left << setw(14) << "Course Code" << setw(14) << "Course Name" << setw(7) << "Year" << setw(12) << "Semester" << setw(30) << "Faculty Name" << endl;
+            cout << "----------------------------------------------------------------------------------------------------------" << endl;
+            sql::Connection* con = getConnection();
+            sql::PreparedStatement* pstmt = con->prepareStatement("SELECT c.course_code, c.course_name, c.year, c.semester, concat (f.fname, ' ' , f.mname, ' ', f.lname) as faculty_name FROM courses c JOIN faculty_info f ON c.faculty_id = f.faculty_id WHERE f.department = ?");
+            pstmt->setString(1, department);
+            sql::ResultSet* res = pstmt->executeQuery();
+            while (res->next()) {
+                cout << left << setw(14) << res->getInt("course_code") << setw(14) << res->getString("course_name") << setw(7) << res->getInt("year") << setw(12) << res->getInt("semester") << setw(30) << res->getString("faculty_name")  << endl;
+            }
+            delete con;
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+
+        cout << "Enter course code: ";
         cin >> course_code;
-        cout << "Enter subject name: ";
-        cin.ignore();
-        getline(cin, course_name);
         cout << "Enter Year(FY/SY/TY):";
         cin >> year;
         cout << "Enter exam date(DD/MM/YY): ";
@@ -853,16 +866,13 @@ public:
         cin >> passing_marks;
         try {
             sql::Connection* con = getConnection();
-            sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks,course_name,dept,year) VALUES (?,?,?,?,?,?,?,?,?)");
+            sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks) VALUES (?,?,?,?,?,?)");
             pstmt->setInt(1, course_code);
             pstmt->setString(2, exam_date);
             pstmt->setString(3, exam_time);
             pstmt->setString(4, exam_duration);
             pstmt->setInt(5, max_marks);
             pstmt->setInt(6, passing_marks);
-            pstmt->setString(7, course_name);
-            pstmt->setString(8, dept);
-            pstmt->setString(9, year);
             pstmt->execute();
             cout << "Exam added successfully." << endl;
             delete pstmt;
@@ -1244,10 +1254,58 @@ public:
             while (res->next()) {
                 cout << left << setw(13) << res->getInt("course_code") << setw(40) << res->getString("course_name") << setw(13) << res->getString("department") << setw(11) << res->getInt("semester") << setw(7) << res->getString("year") << setw(30) << res->getString("faculty_name") << endl;
             }
+            hod_view_course_re:
+			cout << "1. Back to HOD Dashboard" << endl;
+            cout << "2.Refresh " << endl;
+            cout << "Enter a option : ";
+			cin >> choice;
+            if (choice == 1) {
+				clearscreen();
+            }
+            else if (choice == 2) {
+				clearscreen();
+                viewCourses();
+            }
+            else {
+				cout << "Invalid choice" << endl;
+                goto hod_view_course_re;
+            }
         }
         catch (sql::SQLException& e) {
             cerr << "SQL Error: " << e.what() << endl;
         }
+    }
+
+    void viewExam() {
+        cout << "Previously conducted exams" << endl << endl;
+        cout << setw(10) << "Exam ID" << setw(15) << "Course Code" << setw(40) << "Course Name" << setw(11) << "Semester" << setw(10) << "Year" << setw(30) << "Faculty Name" << endl;
+        cout << "--------------------------------------------------------------------------------------------------------------------------------" << endl;
+        try {
+            pstmt = con->prepareStatement("SELECT e.exam_id,c.course_code,c.course_name,c.semester,c.year,concat(f.fname, ' ' , f.mname , ' ' , f.lname) as faculty_name FROM exams AS e JOIN  courses AS c ON e.course_code = c.course_code JOIN  faculty_info AS f ON c.faculty_id = f.faculty_id;");
+            res = pstmt->executeQuery();
+            while (res->next()) {
+                cout << setw(10) << res->getInt("exam_id") << setw(15) << res->getInt("course_code") << setw(40) << res->getString("course_name") << setw(11) << res->getInt("semester") << setw(10) << res->getString("year") << setw(30) << res->getString("faculty_name") << endl;
+            }
+        hod_view_exam_re:
+            cout << "1. Back to HOD dashboard" << endl;
+            cout << "2. Refresh" << endl;
+            cout << "Enter your option: ";
+            cin >> choice;
+            if (choice == 1) {
+                hodmenu();
+            }
+            else if (choice == 2) {
+                viewExam();
+            }
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                goto hod_view_exam_re;
+            }
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+
     }
 
 };
@@ -1259,6 +1317,7 @@ void mainscreen() {
     common_variables
         var;
     string username, password;
+    h.hodmenu();
 mainre:
     cout << "Welcome to Government Polytechnic Awasari" << endl << endl <<
         "1. Student login" << endl <<

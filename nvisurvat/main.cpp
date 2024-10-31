@@ -785,18 +785,18 @@ public:
 
 class hod : public common_variables, public Database {
 private:
-    string fname, department;
+    string fname, department, course;
 public:
-    string course_code, exam_date, exam_time, exam_duration, course_name, year, dept;
-    int max_marks, passing_marks;
+    string  exam_date, exam_time, exam_duration, course_name, year, dept;
+    int max_marks, passing_marks, semester, course_code, faculty;
     void hodmenu() {
         clearscreen();
         cout << "Welcome " << fname << endl << endl;
         cout << "Head of Department Dashboard" << endl;
         cout << "1. View students" << endl <<
             "2. View faculty" << endl <<
-            "3. View course details" << endl <<
-            "4. Add course" << endl <<
+            "3. Add course" << endl <<
+            "4. View courses" << endl <<
             "5. Delete course" << endl <<
             "6. Add Exam" << endl;
         cout << "7. View exam details" << endl <<
@@ -809,11 +809,11 @@ public:
         else if (choice == 2) {
             viewFaculty();
         }
-        else if (choice == 3) {
-            //viewCourseDetails();
-        }
         else if (choice == 4) {
-            //addCourse();
+            viewCourses();
+        }
+        else if (choice == 3) {
+            addCourse();
         }
         else if (choice == 5) {
             //deleteCourse();
@@ -854,7 +854,7 @@ public:
         try {
             sql::Connection* con = getConnection();
             sql::PreparedStatement* pstmt = con->prepareStatement("INSERT INTO exams (course_code, exam_date, exam_time, exam_duration, max_marks, passing_marks,course_name,dept,year) VALUES (?,?,?,?,?,?,?,?,?)");
-            pstmt->setString(1, course_code);
+            pstmt->setInt(1, course_code);
             pstmt->setString(2, exam_date);
             pstmt->setString(3, exam_time);
             pstmt->setString(4, exam_duration);
@@ -962,13 +962,13 @@ public:
     }
 
     void viewStudents() {
-		cout << "View my students" << endl;
+        cout << "View my students" << endl;
         try {
             pstmt = con->prepareStatement("SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS Name, "
                 "department, year, emailid, mobile, birthdate, address, gender, admission_date, "
                 "guardian_name, guardian_contact, blood_group, nationality, category, aadhar_number "
-                "FROM students_info WHERE department = 'IF'");
-            //pstmt->setString(1, department);
+                "FROM students_info WHERE department = ?");
+            pstmt->setString(1, department);
             res = pstmt->executeQuery();
 
             const int widthEnrollment = 15; // enrollmentno (bigint)
@@ -1067,7 +1067,7 @@ public:
                 viewFaculty();
             }
 
-            
+
 
         }
         catch (sql::SQLException& e) {
@@ -1169,6 +1169,87 @@ public:
         }
 
     }
+
+    void addCourse() {
+        clearscreen();
+        cout << "Enter Course Details Below " << endl << endl << endl
+            << "Enter Course code : ";
+        cin >> course_code;
+        cin.ignore();
+        cout << "Enter Course name : ";
+        getline(cin, course_name);
+        cout << setw(5) << "Faculty ID : "
+            << setw(30) << "Faculty Name" << endl;
+        cout << "--------------------------------------------------------------------------------------------------------------------------------" << endl;
+        try {
+            pstmt = con->prepareStatement("SELECT CONCAT(fname,' ', mname,' ', lname) AS name,faculty_id FROM faculty_info WHERE department = ? ORDER BY faculty_id");
+            pstmt->setString(1, department);
+            res = pstmt->executeQuery();
+            while (res->next()) {
+                cout << setw(5) << res->getInt("faculty_id")
+                    << setw(30) << res->getString("name") << endl;
+            }
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+        cout << endl << "Enter Faculty ID :";
+        cin >> faculty;
+        cout << "Enter year (FY,SY,TY) :";
+        cin >> year;
+        cout << "Enter semester (1,2,3,4,5,6) :";
+        cin >> semester;
+        try {
+            pstmt = con->prepareStatement("INSERT INTO courses (course_code, course_name, department, semester, year, faculty_id) VALUES (? ,?, ?, ?, ?, ?)");
+            pstmt->setInt(1, course_code);
+            pstmt->setString(2, course_name);
+            pstmt->setString(3, department);
+            pstmt->setInt(4, semester);
+            pstmt->setString(5, year);
+            pstmt->setInt(6, faculty);
+            pstmt->executeQuery();
+
+            cout << "Course added successfully!" << endl << endl;
+        hod_add_course_re:
+            cout << "1. Add another course" << endl
+                << "2. Back to HOD dashboard" << endl;
+            cout << "Enter your option: ";
+            cin >> choice;
+            if (choice == 1) {
+                addCourse();
+            }
+            else if (choice == 2) {
+                hodmenu();
+            }
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                goto hod_add_course_re;
+            }
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+
+    }
+
+    void viewCourses() {
+        clearscreen();
+        cout << left << setw(13) << "Course Code" << setw(40) << "Course Name" << setw(13) << "Department" << setw(11) << "Semester" << setw(7) << "Year" << setw(30) << "Faculty Name" << endl;
+        cout << "--------------------------------------------------------------------------------------------------------------------------------" << endl;
+        try {
+            pstmt = con->prepareStatement("SELECT c.course_code,c.course_name,c.department,c.semester,c.year,concat(f.fname, ' ' , f.mname , ' ' , f.lname) as faculty_name FROM courses AS c JOIN  faculty_info AS f ON c.faculty_id = f.faculty_id;");
+            res = pstmt->executeQuery();
+            while (res->next()) {
+                cout << left << setw(13) << res->getInt("course_code") << setw(40) << res->getString("course_name") << setw(13) << res->getString("department") << setw(11) << res->getInt("semester") << setw(7) << res->getString("year") << setw(30) << res->getString("faculty_name") << endl;
+            }
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+        }
+    }
+
 };
 
 void mainscreen() {

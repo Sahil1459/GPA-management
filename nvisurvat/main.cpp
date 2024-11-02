@@ -569,6 +569,7 @@ private: string emailid,
     department,
     fname,
     lname;
+       int faculty_id;
        admin a;
 
 public:
@@ -590,7 +591,7 @@ public:
         cout << "Welcome " << fname << "!" << endl << endl << endl;
         cout << "Faculty Dashboard" << endl << endl;
         cout << "1. View my class" << endl <<
-            "2. View Exams" << endl <<
+            "2. Exams" << endl <<
             "3. Logout" << endl << endl;
         "Enter a option:";
         cin >> choice;
@@ -599,11 +600,13 @@ public:
             viewMyclass();
         }
         else if (choice == 2) {
-            cout << "Exam Menu " << endl
-                << "1. View Exams " << endl
-                << "2. Add grades" << endl
-                << "3. View Insights" << endl\
-                << "Enter a choice:";
+            clearscreen();
+            cout << "Exam Section" << endl << endl << endl;
+            cout << "1. View Exams" << endl;
+            cout << "2. Enter Marks" << endl;
+            cout << "3. View Marks" << endl;
+            cout << "4. View Stats" << endl;
+            cout << "Enter choice: ";
             cin >> choice;
             if (choice == 1) {
                 viewExams();
@@ -617,7 +620,7 @@ public:
     bool loginFaculty(string& emailid, string& password) {          // Function to handle faculty login
         int choice;
         try {
-            pstmt = con->prepareStatement("SELECT password, department, fname, lname FROM faculty_info WHERE emailid = ?");
+            pstmt = con->prepareStatement("SELECT password, department, fname, lname, faculty_id FROM faculty_info WHERE emailid = ?");
             pstmt->setString(1, emailid);
 
             res = pstmt->executeQuery();
@@ -627,6 +630,7 @@ public:
                 department = res->getString("department");
                 fname = res->getString("fname");
                 lname = res->getString("lname");
+                faculty_id = res->getInt("faculty_id");
 
                 if (storedPassword == password) {
                     Facultymenu();
@@ -673,8 +677,6 @@ public:
                 }
             }
 
-            delete res;
-            delete pstmt;
 
         }
         catch (sql::SQLException& e) {
@@ -762,8 +764,56 @@ public:
     }
 
     void viewExams() {
-        cout << "1. FY " << endl
-            << "2. SY";
+        cout << "View Exams" << endl;
+        try {
+            sql::Connection* con = getConnection();
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT e.exam_id, e.exam_type, e.exam_date, e.exam_time, e.exam_duration, "
+                "e.max_marks, e.passing_marks, c.course_code, c.course_name, c.year, c.department "
+                "FROM exams e "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "WHERE c.faculty_id = ? AND c.department = ? "
+                "ORDER BY c.year, e.exam_date;"
+            );
+
+            pstmt->setInt(1, faculty_id);
+            pstmt->setString(2, department);
+
+            sql::ResultSet* res = pstmt->executeQuery();
+
+            cout << left << setw(10) << "Exam ID" << setw(15) << "Exam Type" << setw(15) << "Date"
+                << setw(10) << "Time" << setw(15) << "Duration" << setw(10) << "Max Marks"
+                << setw(15) << "Passing Marks" << setw(14) << "Course Code" << setw(40) << "Course Name"
+                << setw(7) << "Year" << endl;
+
+            cout << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+
+            while (res->next()) {
+                cout << left << setw(10) << res->getInt("exam_id")
+                    << setw(15) << res->getString("exam_type")
+                    << setw(15) << res->getString("exam_date")
+                    << setw(10) << res->getString("exam_time")
+                    << setw(15) << res->getString("exam_duration")
+                    << setw(10) << res->getInt("max_marks")
+                    << setw(15) << res->getInt("passing_marks")
+                    << setw(14) << res->getInt("course_code")
+                    << setw(40) << res->getString("course_name")
+                    << setw(7) << res->getString("year") << endl;
+            }
+
+            delete res;
+            delete pstmt;
+            delete con;
+
+            cout << endl << endl << "Press any key to continue..." << endl;
+            cin.ignore();
+            cin.get();
+            Facultymenu();
+
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error: " << e.what() << endl;
+        }
     }
 
 };

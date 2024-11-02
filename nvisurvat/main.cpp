@@ -611,6 +611,9 @@ public:
             if (choice == 1) {
                 viewExams();
             }
+            else if (choice == 2) {
+                enterMarks();
+            }
         }
         else if (choice == 9) {
             clearscreen();
@@ -805,10 +808,99 @@ public:
             delete pstmt;
             delete con;
 
-            cout << endl << endl << "Press any key to continue..." << endl;
+            cout << "Press any key to continue..." << endl;
             cin.ignore();
             cin.get();
             Facultymenu();
+
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+    }
+
+    void enterMarks() {
+        int selectedExamId;
+        clearscreen();
+        try {
+            sql::Connection* con = getConnection();
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT e.exam_id, e.exam_type, e.exam_date, c.course_code, c.course_name, c.year "
+                "FROM exams e "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "JOIN faculty_info f ON c.faculty_id = f.faculty_id "
+                "WHERE f.faculty_id = ? AND c.department = ? "
+                "ORDER BY c.year, e.exam_date;"
+            );
+
+            pstmt->setInt(1, faculty_id);
+            pstmt->setString(2, department);
+            sql::ResultSet* res = pstmt->executeQuery();
+            cout << setw(10) << "Exam ID" << setw(30) << "Exam Type" << setw(15) << "Date" << setw(15) << "Course Code" << setw(40) << "Course Name" << setw(7) << "Year" << endl;
+            cout << "---------------------------------------------------------------------------------------------------------" << endl;
+
+            while (res->next()) {
+                cout << setw(10) << res->getInt("exam_id") << setw(30) << res->getString("exam_type") << setw(15) << res->getString("exam_date") << setw(15) << res->getString("course_code") << setw(40) << res->getString("course_name") << setw(7) << res->getString("year") << endl;
+            }
+
+            cout << "Enter the exam ID to enter marks for: ";
+            cin >> selectedExamId;
+
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+
+        cout << "Enter Marks for All Students" << endl << endl;
+
+        try {
+            sql::Connection* con = getConnection();
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT s.enrollmentno, CONCAT(s.fname, ' ', s.lname) AS full_name "
+                "FROM students_info s "
+                "JOIN courses c ON s.year = c.year "
+                "JOIN exams e ON c.course_code = e.course_code "
+                "WHERE e.exam_id = ?;"
+            );
+
+            pstmt->setInt(1, selectedExamId);
+            sql::ResultSet* res = pstmt->executeQuery();
+
+            cout << left << setw(20) << "Enrollment No" << setw(30) << "Student Name" << setw(10) << "Marks" << endl;
+            cout << "-------------------------------------------------------------------------------------------" << endl;
+
+         
+            if (!res->next()) {
+                cout << "No students found for the selected exam." << endl;
+                return; 
+            }
+
+            do {
+             
+                string enrollmentNo = res->getString("enrollmentno"); 
+                string fullName = res->getString("full_name");
+
+                cout << left << setw(20) << enrollmentNo << setw(30) << fullName;
+
+                int marks;
+                cout << "Enter marks: ";
+                cin >> marks;
+
+             
+                sql::PreparedStatement* insertPstmt = con->prepareStatement(
+                    "INSERT INTO marks (exam_id, enrollmentno, marks) VALUES (?, ?, ?) "
+                    "ON DUPLICATE KEY UPDATE marks = VALUES(marks)");
+                insertPstmt->setInt(1, selectedExamId);
+                insertPstmt->setString(2, enrollmentNo); 
+                insertPstmt->setInt(3, marks);
+                insertPstmt->execute();
+                delete insertPstmt; 
+            } while (res->next());  
+
+            delete pstmt;
+            delete con;
+
+            cout << "All marks entered successfully." << endl;
 
         }
         catch (sql::SQLException& e) {

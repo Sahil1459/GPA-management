@@ -614,6 +614,9 @@ public:
             else if (choice == 2) {
                 enterMarks();
             }
+            else if (choice == 3) {
+                viewMarks();
+            }
         }
         else if (choice == 9) {
             clearscreen();
@@ -869,15 +872,15 @@ public:
             cout << left << setw(20) << "Enrollment No" << setw(30) << "Student Name" << setw(10) << "Marks" << endl;
             cout << "-------------------------------------------------------------------------------------------" << endl;
 
-         
+
             if (!res->next()) {
                 cout << "No students found for the selected exam." << endl;
-                return; 
+                return;
             }
 
             do {
-             
-                string enrollmentNo = res->getString("enrollmentno"); 
+
+                string enrollmentNo = res->getString("enrollmentno");
                 string fullName = res->getString("full_name");
 
                 cout << left << setw(20) << enrollmentNo << setw(30) << fullName;
@@ -886,16 +889,16 @@ public:
                 cout << "Enter marks: ";
                 cin >> marks;
 
-             
+
                 sql::PreparedStatement* insertPstmt = con->prepareStatement(
                     "INSERT INTO marks (exam_id, enrollmentno, marks) VALUES (?, ?, ?) "
                     "ON DUPLICATE KEY UPDATE marks = VALUES(marks)");
                 insertPstmt->setInt(1, selectedExamId);
-                insertPstmt->setString(2, enrollmentNo); 
+                insertPstmt->setString(2, enrollmentNo);
                 insertPstmt->setInt(3, marks);
                 insertPstmt->execute();
-                delete insertPstmt; 
-            } while (res->next());  
+                delete insertPstmt;
+            } while (res->next());
 
             delete pstmt;
             delete con;
@@ -907,6 +910,77 @@ public:
             cout << "Error: " << e.what() << endl;
         }
     }
+
+    void viewMarks() {
+        int selectedExamId;
+        clearscreen();
+        try {
+            sql::Connection* con = getConnection();
+
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT e.exam_id, e.exam_type, e.exam_date, c.course_code, c.course_name, c.year "
+                "FROM exams e "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "JOIN faculty_info f ON c.faculty_id = f.faculty_id "
+                "WHERE f.faculty_id = ? AND c.department = ? "
+                "ORDER BY c.year, e.exam_date;"
+            );
+            pstmt->setInt(1, faculty_id);
+            pstmt->setString(2, department);
+
+            sql::ResultSet* res = pstmt->executeQuery();
+            cout << setw(10) << "Exam ID" << setw(30) << "Exam Type" << setw(15) << "Date"
+                << setw(15) << "Course Code" << setw(40) << "Course Name" << setw(7) << "Year" << endl;
+            cout << "---------------------------------------------------------------------------------------------------------" << endl;
+
+            while (res->next()) {
+                cout << setw(10) << res->getInt("exam_id") << setw(30) << res->getString("exam_type")
+                    << setw(15) << res->getString("exam_date") << setw(15) << res->getString("course_code")
+                    << setw(40) << res->getString("course_name") << setw(7) << res->getString("year") << endl;
+            }
+
+            cout << "Enter the exam ID to view marks: ";
+            cin >> selectedExamId;
+
+            sql::PreparedStatement* marksPstmt = con->prepareStatement(
+                "SELECT s.enrollmentno, CONCAT(s.fname, ' ', s.lname) AS full_name, m.marks "
+                "FROM marks m "
+                "JOIN students_info s ON m.enrollmentno = s.enrollmentno "
+                "WHERE m.exam_id = ?;"
+            );
+            marksPstmt->setInt(1, selectedExamId);
+
+            sql::ResultSet* marksRes = marksPstmt->executeQuery();
+            cout << left << setw(20) << "Enrollment No" << setw(30) << "Student Name" << setw(10) << "Marks" << endl;
+            cout << "--------------------------------------------------------------------------------" << endl;
+
+            if (!marksRes->next()) {
+                cout << "No marks found for the selected exam." << endl;
+            }
+            else {
+                do {
+                    string enrollmentNo = marksRes->getString("enrollmentno");
+                    string fullName = marksRes->getString("full_name");
+                    int marks = marksRes->getInt("marks");
+                    cout << left << setw(20) << enrollmentNo << setw(30) << fullName << setw(10) << marks << endl;
+                } while (marksRes->next());
+            }
+
+            delete marksPstmt;
+            delete pstmt;
+            delete con;
+
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+
+        cout << "Press any key to continue...";
+        cin.ignore();
+        cin.get();
+    }
+
+
 
 };
 

@@ -617,6 +617,13 @@ public:
             else if (choice == 3) {
                 viewMarks();
             }
+            else if (choice == 4) {
+                viewStats();
+            }
+            else {
+                cout << "Invalid choice. Please try again." << endl;
+                Facultymenu();
+            }
         }
         else if (choice == 9) {
             clearscreen();
@@ -980,6 +987,86 @@ public:
         cin.get();
     }
 
+    void viewStats() {
+        int selectedExamId;
+        clearscreen();
+        try {
+            sql::Connection* con = getConnection();
+
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT e.exam_id, e.exam_type, e.exam_date, c.course_code, c.course_name, c.year "
+                "FROM exams e "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "JOIN faculty_info f ON c.faculty_id = f.faculty_id "
+                "WHERE f.faculty_id = ? AND c.department = ? "
+                "ORDER BY c.year, e.exam_date;"
+            );
+            pstmt->setInt(1, faculty_id);
+            pstmt->setString(2, department);
+
+            sql::ResultSet* res = pstmt->executeQuery();
+            cout << setw(10) << "Exam ID" << setw(30) << "Exam Type" << setw(15) << "Date"
+                << setw(15) << "Course Code" << setw(40) << "Course Name" << setw(7) << "Year" << endl;
+            cout << "---------------------------------------------------------------------------------------------------------" << endl;
+
+            while (res->next()) {
+                cout << setw(10) << res->getInt("exam_id") << setw(30) << res->getString("exam_type")
+                    << setw(15) << res->getString("exam_date") << setw(15) << res->getString("course_code")
+                    << setw(40) << res->getString("course_name") << setw(7) << res->getString("year") << endl;
+            }
+
+            cout << "Enter the exam ID to view statistics: ";
+            cin >> selectedExamId;
+
+            sql::PreparedStatement* statsPstmt = con->prepareStatement(
+                "SELECT AVG(m.marks) AS average_marks, MIN(m.marks) AS min_marks, MAX(m.marks) AS max_marks, "
+                "COUNT(m.enrollmentno) AS total_students, "
+                "SUM(CASE WHEN m.marks > (SELECT AVG(marks) FROM marks WHERE exam_id = ?) THEN 1 ELSE 0 END) AS students_above_avg, "
+                "SUM(CASE WHEN m.marks < (SELECT AVG(marks) FROM marks WHERE exam_id = ?) THEN 1 ELSE 0 END) AS students_below_avg "
+                "FROM marks m "
+                "WHERE m.exam_id = ?;"
+            );
+            statsPstmt->setInt(1, selectedExamId);
+            statsPstmt->setInt(2, selectedExamId);
+            statsPstmt->setInt(3, selectedExamId);
+
+            sql::ResultSet* statsRes = statsPstmt->executeQuery();
+
+            if (statsRes->next()) {
+                double averageMarks = statsRes->getDouble("average_marks");
+                int minMarks = statsRes->getInt("min_marks");
+                int maxMarks = statsRes->getInt("max_marks");
+                int totalStudents = statsRes->getInt("total_students");
+                int studentsAboveAvg = statsRes->getInt("students_above_avg");
+                int studentsBelowAvg = statsRes->getInt("students_below_avg");
+
+                cout<< endl << endl << "Statistics for Exam ID: " << selectedExamId << endl<< endl << endl;
+                cout << "Average Marks: " << averageMarks << endl;
+                cout << "Minimum Marks: " << minMarks << endl;
+                cout << "Maximum Marks: " << maxMarks << endl;
+                cout << "Total Students: " << totalStudents << endl;
+                cout << "Students Scoring Above Average: " << studentsAboveAvg << endl;
+                cout << "Students Scoring Below Average: " << studentsBelowAvg << endl;
+            }
+            else {
+                cout<< endl << "No statistics available for the selected exam." << endl;
+            }
+
+            delete statsPstmt;
+            delete pstmt;
+            delete con;
+
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+
+        cout << "Press any key to continue...";
+        cin.ignore();
+        cin.get();
+
+        Facultymenu();
+    }
 
 
 };

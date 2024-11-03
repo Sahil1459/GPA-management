@@ -699,7 +699,7 @@ public:
 
         }
         catch (sql::SQLException& e) {
-            cerr << "Error during login: " << e.what() << :endl;
+            cerr << "Error during login: " << e.what() << endl;
         }
 
 
@@ -1718,12 +1718,262 @@ public:
 
 };
 
+class student : public common_variables, public Database {
+private:
+    string email_id, password, retrivedpass;
+    int enrollmentno;
+
+
+public:
+    void studentmenu() {
+        cout << "1. View my profile" << endl <<
+            "2. View courses" << endl <<
+            "3. View exams" << endl <<
+            "4. View results" << endl <<
+            "5. Logout" << endl << endl <<
+            "Enter your choice: ";
+        cin >> choice;
+
+        if (choice == 1) {
+            viewprofile();
+        }
+        else if (choice == 2) {
+            //viewcourses();
+        }
+        else if (choice == 3) {
+            viewExams();
+        }
+        else if (choice == 4) {
+            //viewresult();
+        }
+        else if (choice == 5) {
+            mainscreen();
+        }
+        else {
+            cout << "Invalid choice. Please try again." << endl;
+            studentmenu();
+        }
+
+    }
+
+    void studentLogin() {
+        clearscreen();
+        cout << "Student Login" << endl << endl;
+        cout << "Enter your Email ID: ";
+        cin >> email_id;
+        cout << "Enter your password: ";
+        cin >> password;
+
+        try {
+            pstmt = con->prepareStatement("SELECT enrollmentno, password FROM students_info WHERE emailid = ?");
+            pstmt->setString(1, email_id);
+            res = pstmt->executeQuery();
+
+            if (res->next()) {
+                retrivedpass = res->getString("password");
+                enrollmentno = res->getInt("enrollmentno");
+
+                if (password == retrivedpass) {
+                    cout << "Login successful!" << endl;
+                    clearscreen();
+                    studentmenu();
+                }
+                else {
+                    cout << "Invalid password. Please try again." << endl << endl;
+                    cout << "1. Try again" << endl;
+                    cout << "2. Back to main menu" << endl;
+                    cout << "Enter choice: ";
+                    cin >> choice;
+
+                    if (choice == 1) {
+                        clearscreen();
+                        studentLogin();
+                    }
+                    else {
+                        clearscreen();
+                        mainscreen();
+                    }
+                }
+            }
+            else {
+                cout << "Email ID not found." << endl << endl;
+                cout << "1. Try again" << endl;
+                cout << "2. Back to main menu" << endl;
+                cout << "Enter choice: ";
+                cin >> choice;
+
+                if (choice == 1) {
+                    clearscreen();
+                    studentLogin();
+                }
+                else {
+                    clearscreen();
+                    mainscreen();
+                }
+            }
+
+            delete res;
+            delete pstmt;
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "SQL Error: " << e.what() << endl;
+            cout << "\n1. Try again" << endl;
+            cout << "2. Back to main menu" << endl;
+            cout << "Enter choice: ";
+            cin >> choice;
+
+            if (choice == 1) {
+                clearscreen();
+                studentLogin();
+            }
+            else {
+                clearscreen();
+                mainscreen();
+            }
+        }
+    }
+    void viewprofile() {
+        clearscreen();
+        try {
+            pstmt = con->prepareStatement(
+                "SELECT enrollmentno, CONCAT(fname, ' ', mname, ' ', lname) AS full_name, "
+                "department, year, emailid, mobile, birthdate, address, gender, "
+                "admission_date, guardian_name, guardian_contact, blood_group, "
+                "nationality, category, aadhar_number "
+                "FROM students_info WHERE emailid = ?"
+            );
+
+            pstmt->setString(1, email_id);
+            res = pstmt->executeQuery();
+
+            if (res->next()) {
+                cout << "Student Profile" << endl;
+                cout << "----------------------------------------" << endl;
+                cout << "Enrollment No: " << res->getString("enrollmentno") << endl;
+                cout << "Full Name: " << res->getString("full_name") << endl;
+                cout << "Department: " << res->getString("department") << endl;
+                cout << "Year: " << res->getString("year") << endl;
+                cout << "Email ID: " << res->getString("emailid") << endl;
+                cout << "Mobile: " << res->getString("mobile") << endl;
+                cout << "Birth Date: " << res->getString("birthdate") << endl;
+                cout << "Gender: " << res->getString("gender") << endl;
+                cout << "Admission Date: " << res->getString("admission_date") << endl;
+                cout << "Guardian Name: " << res->getString("guardian_name") << endl;
+                cout << "Guardian Contact: " << res->getString("guardian_contact") << endl;
+                cout << "Blood Group: " << res->getString("blood_group") << endl;
+                cout << "Nationality: " << res->getString("nationality") << endl;
+                cout << "Category: " << res->getString("category") << endl;
+                cout << "Aadhar Number: " << res->getString("aadhar_number") << endl;
+                cout << "Address: " << res->getString("address") << endl;
+                cout << "----------------------------------------" << endl;
+            }
+
+            cout << endl << "1. Back to Student Menu" << endl;
+            cout << "Enter your choice: ";
+            cin >> choice;
+
+            if (choice == 1) {
+                clearscreen();
+                studentmenu();
+            }
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "Error viewing profile: " << e.what() << endl;
+            studentmenu();
+        }
+    }
+
+    void viewExams() {
+        clearscreen();
+        cout << "Upcoming Exams" << endl << endl;
+
+        try {
+            // Ensure that `con` is properly initialized
+            sql::Connection* con = getConnection();
+
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT e.exam_id, e.exam_type, e.exam_date, e.exam_time, "
+                "e.exam_duration, e.max_marks, e.passing_marks, "
+                "c.course_name, c.course_code "
+                "FROM exams e "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "WHERE c.year = (SELECT year FROM students_info WHERE enrollmentno = ?) "
+                "AND c.department = (SELECT department FROM students_info WHERE enrollmentno = ?) "
+                "AND STR_TO_DATE(e.exam_date, '%d/%m/%y') >= CURDATE() "
+                "ORDER BY STR_TO_DATE(e.exam_date, '%d/%m/%y'), e.exam_time"
+            );
+
+            pstmt->setInt(1, enrollmentno);
+            pstmt->setInt(2, enrollmentno);
+            sql::ResultSet* res = pstmt->executeQuery();
+
+            cout << left
+                << setw(10) << "Exam ID"
+                << setw(15) << "Course Code"
+                << setw(40) << "Course Name"
+                << setw(15) << "Exam Type"
+                << setw(12) << "Date"
+                << setw(10) << "Time"
+                << setw(15) << "Duration"
+                << setw(12) << "Max Marks"
+                << setw(12) << "Pass Marks"
+                << endl;
+
+            cout << string(141, '-') << endl;
+            while (res->next()) {
+                cout << left
+                    << setw(10) << res->getInt("exam_id")
+                    << setw(15) << res->getString("course_code")
+                    << setw(40) << res->getString("course_name")
+                    << setw(15) << res->getString("exam_type")
+                    << setw(12) << res->getString("exam_date")
+                    << setw(10) << res->getString("exam_time")
+                    << setw(15) << res->getString("exam_duration")
+                    << setw(12) << res->getInt("max_marks")
+                    << setw(12) << res->getInt("passing_marks")
+                    << endl;
+            }
+
+            delete res;
+            delete pstmt;
+            delete con;
+
+            int choice;
+            cout << endl << "1. Back to Student Menu" << endl;
+            cout << "2. Refresh" << endl;
+            cout << "Enter your choice: ";
+            cin >> choice;
+
+            if (choice == 1) {
+                clearscreen();
+                studentmenu();
+            }
+            else if (choice == 2) {
+                clearscreen();
+                viewExams();
+            }
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "Error viewing exams: " << e.what() << endl;
+            studentmenu();
+        }
+    }
+
+
+};
+
+
+
 void mainscreen() {  // Starting of the program
     admin a;
     Faculty t;
     hod h;
     common_variables
         var;
+    student s;
     string username, password;
 mainre:
     cout << "Welcome to Government Polytechnic Awasari" << endl << endl <<
@@ -1738,8 +1988,8 @@ mainre:
     cout << endl;
     clearscreen();
     if (var.choice == 1) {
-        cout << "Service under development!" << endl;
-        mainscreen();
+        cout << "   Student login   " << endl << endl;
+        s.studentLogin();
     }
     else if (var.choice == 2) {
         string emailid, pass;

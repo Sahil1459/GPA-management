@@ -20,6 +20,8 @@
 
 #include <cppconn/exception.h>              // for hadnling error coming through database
 
+#include <fstream>                          // for file handling
+
 using namespace std;
 void mainscreen(); // Declaration of mainscreen function
 
@@ -606,6 +608,7 @@ public:
             cout << "2. Enter Marks" << endl;
             cout << "3. View Marks" << endl;
             cout << "4. View Stats" << endl;
+            cout << "5. Generate Reoport" << endl;
             cout << "Enter choice: ";
             cin >> choice;
             if (choice == 1) {
@@ -619,6 +622,9 @@ public:
             }
             else if (choice == 4) {
                 viewStats();
+            }
+            else if (choice == 5) {
+                generateCSVReport();
             }
             else {
                 cout << "Invalid choice. Please try again." << endl;
@@ -693,7 +699,7 @@ public:
 
         }
         catch (sql::SQLException& e) {
-            std::cerr << "Error during login: " << e.what() << std::endl;
+            cerr << "Error during login: " << e.what() << :endl;
         }
 
 
@@ -1040,7 +1046,7 @@ public:
                 int studentsAboveAvg = statsRes->getInt("students_above_avg");
                 int studentsBelowAvg = statsRes->getInt("students_below_avg");
 
-                cout<< endl << endl << "Statistics for Exam ID: " << selectedExamId << endl<< endl << endl;
+                cout << endl << endl << "Statistics for Exam ID: " << selectedExamId << endl << endl << endl;
                 cout << "Average Marks: " << averageMarks << endl;
                 cout << "Minimum Marks: " << minMarks << endl;
                 cout << "Maximum Marks: " << maxMarks << endl;
@@ -1049,7 +1055,7 @@ public:
                 cout << "Students Scoring Below Average: " << studentsBelowAvg << endl;
             }
             else {
-                cout<< endl << "No statistics available for the selected exam." << endl;
+                cout << endl << "No statistics available for the selected exam." << endl;
             }
 
             delete statsPstmt;
@@ -1067,6 +1073,123 @@ public:
 
         Facultymenu();
     }
+
+    void generateCSVReport() {
+        string filePath;
+        clearscreen();
+        cout << "Enter the file path to save the CSV report  with file name(e.g. C:\\Reports\\exam_report.csv): ";
+        cin.ignore();
+        getline(cin, filePath);
+        int selectedExamId;
+
+        try {
+            sql::Connection* con = getConnection();
+
+            cout << "Enter the exam ID to generate the report: ";
+            cin >> selectedExamId;
+
+            // Verify if exam exists
+            sql::PreparedStatement* checkPstmt = con->prepareStatement(
+                "SELECT e.exam_type, c.course_name FROM exams e "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "WHERE e.exam_id = ?"
+            );
+            checkPstmt->setInt(1, selectedExamId);
+            sql::ResultSet* checkRes = checkPstmt->executeQuery();
+
+            if (!checkRes->next()) {
+                cout << "Exam ID not found!" << endl;
+                return;
+            }
+
+            string examType = checkRes->getString("exam_type");
+            string courseName = checkRes->getString("course_name");
+
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT s.enrollmentno, CONCAT(s.fname, ' ', s.lname) AS full_name, m.marks "
+                "FROM marks m "
+                "JOIN students_info s ON m.enrollmentno = s.enrollmentno "
+                "WHERE m.exam_id = ? "
+                "ORDER BY s.enrollmentno"
+            );
+            pstmt->setInt(1, selectedExamId);
+            sql::ResultSet* res = pstmt->executeQuery();
+
+            ofstream csvFile(filePath);
+            if (!csvFile.is_open()) {
+                cout << "Error: Could not open file for writing!" << endl;
+                return;
+            }
+
+            // Write report header
+            csvFile << "Exam Report\n";
+            csvFile << "Exam Type: " << examType << "\n";
+            csvFile << "Course: " << courseName << "\n";
+
+            // Get current date
+            time_t t = time(nullptr);
+            tm* tm = localtime(&t);
+            csvFile << "Date: " << put_time(tm, "%Y-%m-%d") << "\n\n";
+
+            // Write column headers
+            csvFile << "Enrollment No,Student Name,Marks Obtained,Status\n";
+
+            int totalStudents = 0;
+            int passedStudents = 0;
+            int marksSum = 0;
+            int highestMarks = INT_MIN;
+            int lowestMarks = INT_MAX;
+
+            while (res->next()) {
+                int marksObtained = res->getInt("marks");
+                string status = (marksObtained >= 40) ? "PASS" : "FAIL";
+
+                csvFile << res->getString("enrollmentno") << ","
+                    << res->getString("full_name") << ","
+                    << marksObtained << ","
+                    << status << "\n";
+
+                totalStudents++;
+                marksSum += marksObtained;
+
+                if (marksObtained > highestMarks) highestMarks = marksObtained;
+                if (marksObtained < lowestMarks) lowestMarks = marksObtained;
+
+                if (marksObtained >= 40) passedStudents++;
+            }
+
+            // Calculate average marks
+            double averageMarks = totalStudents > 0 ? static_cast<double>(marksSum) / totalStudents : 0.0;
+
+            // Write summary
+            csvFile << "\nSummary\n";
+            csvFile << "Total Students," << totalStudents << "\n";
+            csvFile << "Passed Students," << passedStudents << "\n";
+            csvFile << "Average Marks," << fixed << setprecision(2) << averageMarks << "\n";
+            csvFile << "Highest Marks," << highestMarks << "\n";
+            csvFile << "Lowest Marks," << lowestMarks << "\n";
+
+            csvFile.close();
+            cout << "Report successfully generated at: " << filePath << endl;
+
+            delete res;
+            delete pstmt;
+            delete checkRes;
+            delete checkPstmt;
+            delete con;
+
+        }
+        catch (sql::SQLException& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+
+        cout << "\nPress Enter to continue...";
+        cin.ignore();
+        cin.get();
+        Facultymenu();
+    }
+
+
 
 
 };
@@ -1258,7 +1381,7 @@ public:
             delete pstmt;
         }
         catch (sql::SQLException& e) {
-            std::cerr << "Error during login: " << e.what() << std::endl;
+            cerr << "Error during login: " << e.what() << endl;
         }
 
 

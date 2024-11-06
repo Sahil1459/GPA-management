@@ -1720,7 +1720,7 @@ public:
 
 class student : public common_variables, public Database {
 private:
-    string email_id, password, retrivedpass;
+    string email_id, password, retrivedpass, fname, branch, year, semester, lname, department;
     int enrollmentno;
 
 
@@ -1738,13 +1738,13 @@ public:
             viewprofile();
         }
         else if (choice == 2) {
-            //viewcourses();
+            viewcourses();
         }
         else if (choice == 3) {
             viewExams();
         }
         else if (choice == 4) {
-            //viewresult();
+            viewresult();
         }
         else if (choice == 5) {
             mainscreen();
@@ -1765,21 +1765,33 @@ public:
         cin >> password;
 
         try {
-            pstmt = con->prepareStatement("SELECT enrollmentno, password FROM students_info WHERE emailid = ?");
+            sql::Connection* con = getConnection();
+            // Query to get all needed student information
+            sql::PreparedStatement* pstmt = con->prepareStatement(
+                "SELECT enrollmentno, password, department, fname, lname, year "
+                "FROM students_info WHERE emailid = ?"
+            );
             pstmt->setString(1, email_id);
-            res = pstmt->executeQuery();
+            sql::ResultSet* res = pstmt->executeQuery();
 
             if (res->next()) {
+                // Store all student information as class members
+                enrollmentno = res->getInt("enrollmentno");  // Crucial line for storing enrollment number
                 retrivedpass = res->getString("password");
-                enrollmentno = res->getInt("enrollmentno");
+                department = res->getString("department");
+                fname = res->getString("fname");
+                lname = res->getString("lname");
+                year = res->getString("year");
 
                 if (password == retrivedpass) {
                     cout << "Login successful!" << endl;
+                    cout << "Welcome " << fname << " " << lname << "!" << endl;
+                    cout << "Enrollment No: " << enrollmentno << endl; // Debug line to verify enrollment number
                     clearscreen();
                     studentmenu();
                 }
                 else {
-                    cout << "Invalid password. Please try again." << endl << endl;
+                    cout << "Invalid password." << endl << endl;
                     cout << "1. Try again" << endl;
                     cout << "2. Back to main menu" << endl;
                     cout << "Enter choice: ";
@@ -1814,25 +1826,16 @@ public:
 
             delete res;
             delete pstmt;
+            delete con;
 
         }
         catch (sql::SQLException& e) {
-            cerr << "SQL Error: " << e.what() << endl;
-            cout << "\n1. Try again" << endl;
-            cout << "2. Back to main menu" << endl;
-            cout << "Enter choice: ";
-            cin >> choice;
-
-            if (choice == 1) {
-                clearscreen();
-                studentLogin();
-            }
-            else {
-                clearscreen();
-                mainscreen();
-            }
+            cerr << "Database error: " << e.what() << endl;
         }
     }
+
+
+
     void viewprofile() {
         clearscreen();
         try {
@@ -1961,6 +1964,172 @@ public:
             studentmenu();
         }
     }
+
+    void viewcourses() {
+        clearscreen();
+        cout << "Your Courses" << endl << endl;
+
+        try {
+            sql::Connection* con = getConnection();
+
+            sql::PreparedStatement* courseStmt = con->prepareStatement(
+                "SELECT c.course_code, c.course_name, c.semester, "
+                "CONCAT(f.fname, ' ', f.lname) as faculty_name "
+                "FROM courses c "
+                "JOIN faculty_info f ON c.faculty_id = f.faculty_id "
+                "WHERE c.department = ? AND c.year = ? "
+                "ORDER BY c.semester"
+            );
+
+            courseStmt->setString(1, department);
+            courseStmt->setString(2, year);
+            sql::ResultSet* courseRes = courseStmt->executeQuery();
+
+            cout << left
+                << setw(15) << "Course Code"
+                << setw(40) << "Course Name"
+                << setw(15) << "Semester"
+                << setw(30) << "Faculty"
+                << endl;
+            cout << string(100, '-') << endl;
+
+            int courseCount = 0;
+            while (courseRes->next()) {
+                courseCount++;
+                cout << left
+                    << setw(15) << courseRes->getString("course_code")
+                    << setw(40) << courseRes->getString("course_name")
+                    << setw(15) << courseRes->getString("semester")
+                    << setw(30) << courseRes->getString("faculty_name")
+                    << endl;
+            }
+
+            cout << "\nTotal courses: " << courseCount << endl;
+
+            delete courseRes;
+            delete courseStmt;
+            delete con;
+
+            cout << "\nPress Enter to continue...";
+            cin.ignore();
+            cin.get();
+            clearscreen();
+            studentmenu();
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "Database error: " << e.what() << endl;
+            studentmenu();
+        }
+    }
+
+
+    void viewresult() {
+        clearscreen();
+        cout << "Your Exam Results" << endl << endl;
+
+        try {
+            sql::Connection* con = getConnection();
+
+            // First display exams the student has taken
+            sql::PreparedStatement* examStmt = con->prepareStatement(
+                "SELECT DISTINCT e.exam_id, e.exam_type, c.course_name, e.exam_date, "
+                "e.max_marks, e.passing_marks "
+                "FROM exams e "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "JOIN marks m ON e.exam_id = m.exam_id "
+                "JOIN students_info s ON m.enrollmentno = s.enrollmentno "
+                "WHERE s.emailid = ? "
+                "ORDER BY STR_TO_DATE(e.exam_date, '%d/%m/%y') DESC"
+            );
+
+            examStmt->setString(1, email_id);
+            sql::ResultSet* examRes = examStmt->executeQuery();
+
+            cout << left
+                << setw(10) << "Exam ID"
+                << setw(15) << "Exam Type"
+                << setw(40) << "Course Name"
+                << setw(15) << "Date"
+                << setw(12) << "Max Marks"
+                << setw(15) << "Passing Marks"
+                << endl;
+            cout << string(107, '-') << endl;
+
+            while (examRes->next()) {
+                cout << left
+                    << setw(10) << examRes->getInt("exam_id")
+                    << setw(15) << examRes->getString("exam_type")
+                    << setw(40) << examRes->getString("course_name")
+                    << setw(15) << examRes->getString("exam_date")
+                    << setw(12) << examRes->getInt("max_marks")
+                    << setw(15) << examRes->getInt("passing_marks")
+                    << endl;
+            }
+
+            int selectedExamId;
+            cout << "\nEnter Exam ID to view detailed result: ";
+            cin >> selectedExamId;
+
+            // Fetch and display specific exam result
+            sql::PreparedStatement* resultStmt = con->prepareStatement(
+                "SELECT m.marks, e.max_marks, e.passing_marks, "
+                "c.course_name, e.exam_type, "
+                "CASE WHEN m.marks >= e.passing_marks THEN 'PASS' ELSE 'FAIL' END as status "
+                "FROM marks m "
+                "JOIN exams e ON m.exam_id = e.exam_id "
+                "JOIN courses c ON e.course_code = c.course_code "
+                "JOIN students_info s ON m.enrollmentno = s.enrollmentno "
+                "WHERE m.exam_id = ? AND s.emailid = ?"
+            );
+
+            resultStmt->setInt(1, selectedExamId);
+            resultStmt->setString(2, email_id);
+            sql::ResultSet* resultRes = resultStmt->executeQuery();
+
+            if (resultRes->next()) {
+                clearscreen();
+                cout << "\nDetailed Result" << endl;
+                cout << "----------------------------------------" << endl;
+                cout << "Course: " << resultRes->getString("course_name") << endl;
+                cout << "Exam Type: " << resultRes->getString("exam_type") << endl;
+                cout << "Marks Obtained: " << resultRes->getInt("marks") << endl;
+                cout << "Maximum Marks: " << resultRes->getInt("max_marks") << endl;
+                cout << "Passing Marks: " << resultRes->getInt("passing_marks") << endl;
+                cout << "Status: " << resultRes->getString("status") << endl;
+                cout << "----------------------------------------" << endl;
+            }
+
+            delete resultRes;
+            delete examRes;
+            delete resultStmt;
+            delete examStmt;
+            delete con;
+
+            cout << "\n1. View Another Result" << endl;
+            cout << "2. Back to Student Menu" << endl;
+            cout << "Enter your choice: ";
+            int choice;
+            cin >> choice;
+
+            if (choice == 1) {
+                viewresult();
+            }
+            else {
+                clearscreen();
+                studentmenu();
+            }
+
+        }
+        catch (sql::SQLException& e) {
+            cerr << "Database error: " << e.what() << endl;
+            studentmenu();
+        }
+    }
+
+
+
+
 
 
 };

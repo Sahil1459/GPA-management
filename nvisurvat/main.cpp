@@ -313,43 +313,58 @@ public:
         }
     }
 
-    void deleteStudent()
-    { // Function to delete a student record
+    void deleteStudent() {
         unique_ptr<sql::Statement> stmt(con->createStatement());
         cout << "Enter enrollment number of the student to delete: ";
         cin >> enrollmentno;
 
-        try
-        {
+        try {
+            // First verify if student exists
+            string checkQuery = "SELECT enrollmentno FROM students_info WHERE enrollmentno = " + to_string(enrollmentno);
+            unique_ptr<sql::ResultSet> checkResult(stmt->executeQuery(checkQuery));
 
-            string deleteQuery = "DELETE FROM students_info WHERE enrollmentno = " + to_string(enrollmentno);
-            stmt->execute(deleteQuery);
+            if (!checkResult->next()) {
+                cout << "Student with enrollment number " << enrollmentno << " not found." << endl;
+            }
+            else {
+                // First delete associated marks
+                string deleteMarksQuery = "DELETE FROM marks WHERE enrollmentno = " + to_string(enrollmentno);
+                stmt->executeUpdate(deleteMarksQuery);
 
-            cout << "Student record deleted successfully!" << endl;
+                // Then delete the student
+                string deleteStudentQuery = "DELETE FROM students_info WHERE enrollmentno = " + to_string(enrollmentno);
+                int rowsAffected = stmt->executeUpdate(deleteStudentQuery);
+
+                if (rowsAffected > 0) {
+                    cout << "Student record and associated marks deleted successfully!" << endl;
+                }
+                else {
+                    cout << "Failed to delete student record." << endl;
+                }
+            }
         }
-        catch (sql::SQLException& e)
-        {
+        catch (sql::SQLException& e) {
             cerr << "SQL Error: " << e.what() << endl;
         }
+
         int choice;
-        cout << endl
-            << endl;
+        cout << endl << endl;
         cout << "1. Delete another student" << endl;
         cout << "2. Back to admin menu" << endl;
         cout << "Enter a option:" << endl;
         cin >> choice;
-        cout << endl
-            << endl;
+        cout << endl << endl;
         clearscreen();
-        if (choice == 1)
-        {
+
+        if (choice == 1) {
             deleteStudent();
         }
-        if (choice == 2)
-        {
+        if (choice == 2) {
             adminmenu();
         }
     }
+
+
 
     void registerFaculty()
     { // Function to register a new faculty
@@ -1795,8 +1810,8 @@ public:
 
             if (res->next())
             {
-                
-                enrollmentno = res->getInt("enrollmentno"); 
+
+                enrollmentno = res->getInt("enrollmentno");
                 retrivedpass = res->getString("password");
                 department = res->getString("department");
                 fname = res->getString("fname");
@@ -1807,7 +1822,7 @@ public:
                 {
                     cout << "Login successful!" << endl;
                     cout << "Welcome " << fname << " " << lname << "!" << endl;
-                    cout << "Enrollment No: " << enrollmentno << endl; 
+                    cout << "Enrollment No: " << enrollmentno << endl;
                     clearscreen();
                     studentmenu();
                 }
@@ -2275,5 +2290,5 @@ mainre:
 int main()
 {                 // seprated mainscreen function beacuse we can't main function outside main function
     mainscreen(); // Displays all User Logins
-     return 0;
+    return 0;
 }
